@@ -1,0 +1,30 @@
+{
+  "name": "web-start-front",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev .playground",
+    "build": "nuxt build .playground",
+    "preview": "nuxt preview .playground",
+    "typecheck": "nuxt typecheck .playground",
+    "test": "vitest run",
+    "api:types": "../back/.venv/bin/python ../back/app/manage.py export_openapi | openapi-typescript --default-non-nullable=false -o layers/core/app/types/api.d.ts"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "1.2.137",
+    "@nuxt/ui": "4.11.2",
+    "@tailwindcss/typography": "0.5.20",
+    "nuxt": "4.5.2",
+    "openapi-fetch": "0.17.0",
+    "tailwindcss": "4.3.3",
+    "vue": "3.5.43",
+    "vue-router": "5.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vitest": "5.0.2",
+    "vue-tsc": "3.3.11"
+  }
+}

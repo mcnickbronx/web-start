@@ -1,0 +1,6 @@
+# В образ — зависимости, код и compose.yml. Настройки (.env) и файлы сайта — только на сервере
+*
+!requirements.txt
+!app
+!compose.yml
+**/__pycache__

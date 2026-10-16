@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+.idea/
+.vscode/
+.DS_Store
+.pytest_cache/
+
+# Ключи, база, почта, параметры docker compose — у каждого окружения свои, шаблон в .env.txt
+.env
+
+# Генерируются на сервере / при работе. Только в корне: static/ внутри модулей — исходники
+/static/
+/media/
+/private/

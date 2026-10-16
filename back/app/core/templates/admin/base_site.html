@@ -1,0 +1,5 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{# Общее для админки всех модулей: сворачиваемая панель фильтров, курсор в поиске подсказок (core/static/core/admin.js) #}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "core/admin.css" %}">{% endblock %}
+{% block extrahead %}{{ block.super }}<script src="{% static "core/admin.js" %}" defer></script>{% endblock %}

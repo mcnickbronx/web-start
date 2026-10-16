@@ -1,0 +1,174 @@
+# Сервер с нашей инфраструктурой: Traefik, лимиты проекта, Postgres на хосте. Свой сервер без неё —
+# docs/deploy.md, «Что нужно от сервера».
+# Выкладывает автовыкладка (docs/deploy.md): CI собирает образ с кодом и этим файлом внутри,
+# сервер сам берёт новый образ, запускает сервис deploy (миграции, статика) и пересоздаёт
+# контейнеры. Образ — DEPLOY_IMAGE в .env. Руками в папке проекта: docker compose ps / logs.
+# Имя проекта и домен — из .env: COMPOSE_PROJECT_NAME (как папка в /srv/projects) и DOMAIN.
+#
+# Точка входа одна — project/asgi.py, как локальный runserver. Профиль — COMPOSE_PROFILES в .env
+# (без него поднимутся только files и cron):
+#   light — админка, API и задачи (письма) одним процессом: контентный сайт, ~200 МБ
+#   full  — админка отдельным процессом, задачи через Redis и воркер: кабинеты, магазины. В .env — REDIS_URL
+name: ${COMPOSE_PROJECT_NAME}
+
+x-app: &app
+  # Приложение не от root и без особых прав Linux
+  extends: { file: /srv/infra/compose/base.yml, service: hardened-strict }
+  image: ${DEPLOY_IMAGE}             # ghcr.io/<владелец>/web-start-back:<хеш коммита> (сайт) или :dev, собирает CI
+  user: "1000:1000"
+  # Всё приложения, и доступ к базе тоже: его кладёт в .env администратор (docs/deploy.md)
+  env_file:
+    - .env
+  environment:
+    DJANGO_SETTINGS_MODULE: project.settings
+    HOME: /tmp                       # у пользователя 1000 в образе нет домашней папки
+  # Код — в образе, принадлежит root: взломанное приложение не перепишет себя. Пишет оно только
+  # в папки проекта ниже — их создаёт автовыкладка
+  volumes:
+    - ./media:/usr/www/media
+    - ./private:/usr/www/private     # файлы, которые наружу не отдаются: заявки модуля form
+    - ./static:/usr/www/static
+  working_dir: /usr/www/app
+
+services:
+  # Админка и API одним процессом: project/asgi.py делит запросы по адресу — /api → FastAPI, остальное →
+  # Django (его синхронный код — в отдельном потоке, API он не тормозит). Процессов — по числу ядер проекта.
+  # Профиль light: задачи — в этом же процессе, без Redis. Начатые задачи процесс при остановке дожидается,
+  # но docker ждёт его 10 секунд: письмо, которое зависло дольше, не уйдёт — у заявки останется «ждёт отправки»
+  app:
+    <<: *app
+    profiles: [light]
+    command: &app-command >
+      uvicorn project.asgi:application --host 0.0.0.0 --port 8000
+      --workers ${API_WORKERS:-1} --proxy-headers --forwarded-allow-ips=*
+    environment:
+      DJANGO_SETTINGS_MODULE: project.settings
+      HOME: /tmp
+      REDIS_URL: ""                  # Redis в этом профиле нет — даже если в .env остался адрес
+    deploy: &app-deploy { resources: { limits: { memory: 700m } } }
+    # Автовыкладка ждёт, пока приложение ответит; не ответило — возвращает прежнюю версию.
+    # Traefik пускает запросы только в здоровый контейнер: пока он запускается — проверка
+    # раз в секунду (start_interval), иначе после выкладки сайт лишние секунды не отвечал бы
+    # CMD-SHELL, а не [CMD, python, -c, "…"]: Podman (сервер, где у проекта свой Docker без root)
+    # режет аргументы проверки по пробелам, и такая проверка у него всегда падает. Docker понимает обе
+    healthcheck: &app-health
+      test: [CMD-SHELL, "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    labels: &app-labels
+      - traefik.enable=true
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}-app.loadbalancer.server.port=8000
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.service=${COMPOSE_PROJECT_NAME}-app
+      # Вход, коды из писем, формы и вход в админку — не чаще 10 запросов в минуту с адреса: подбор паролей, спам
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.rule=Host(`${DOMAIN}`) && (Path(`/api/user/pair`) || Path(`/api/user/register`) || PathPrefix(`/api/user/activate`) || PathPrefix(`/api/user/password/reset`) || Path(`/api/form/create`) || Path(`/api/form/upload-file`) || Path(`/admin/login/`))
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.service=${COMPOSE_PROJECT_NAME}-app
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.middlewares=login-ratelimit@file
+      # www.<домен> → <домен>
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-www.redirectregex.regex=^https://www\.(.+)
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-www.redirectregex.replacement=https://$${1}
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-www.redirectregex.permanent=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-www.rule=Host(`www.${DOMAIN}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-www.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-www.service=${COMPOSE_PROJECT_NAME}-app
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-www.middlewares=${COMPOSE_PROJECT_NAME}-www
+
+  # Профиль full: то же приложение, но задачи уходят в Redis (REDIS_URL из .env), их разбирает worker.
+  # Отдельный сервис только ради этого: в light адрес Redis глушится, здесь — нет
+  app-full:
+    <<: *app
+    profiles: [full]
+    command: *app-command
+    deploy: *app-deploy
+    healthcheck: *app-health
+    labels: *app-labels
+
+  # Профиль full: админка — отдельным процессом с той же точкой входа. Traefik отправляет сюда /admin
+  # (правило длиннее общего — важнее): тяжёлая выгрузка в админке не тормозит API, нехватка памяти
+  # роняет только админку. Вход (/admin/login/) идёт через лимит частоты в app-full — код тот же
+  admin:
+    <<: *app
+    profiles: [full]
+    command: >
+      uvicorn project.asgi:application --host 0.0.0.0 --port 8000
+      --workers ${ADMIN_WORKERS:-1} --proxy-headers --forwarded-allow-ips=*
+    deploy: { resources: { limits: { memory: 400m } } }
+    healthcheck: *app-health
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}-admin.loadbalancer.server.port=8000
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.rule=Host(`${DOMAIN}`) && PathPrefix(`/admin`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}-admin
+
+  # Статика админки и загруженные файлы. private/ сюда не монтируется — наружу не отдаётся.
+  # nginx без root и под группой 1000: другим пользователям контейнера папка проекта не видна
+  files:
+    extends: { file: /srv/infra/compose/base.yml, service: hardened-strict }
+    image: nginxinc/nginx-unprivileged:stable-alpine
+    user: "1000:1000"
+    volumes:
+      - ./static:/usr/share/nginx/html/static:ro
+      - ./media:/usr/share/nginx/html/media:ro
+    deploy: { resources: { limits: { memory: 64m } } }
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}-files.loadbalancer.server.port=8080
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.rule=Host(`${DOMAIN}`) && (PathPrefix(`/static/`) || PathPrefix(`/media/`))
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.service=${COMPOSE_PROJECT_NAME}-files
+
+  # Очередь задач: в .env REDIS_URL=redis://redis:6379/0. Без него задачи идут в процессе API,
+  # и redis с worker не нужны
+  redis:
+    extends: { file: /srv/infra/compose/base.yml, service: hardened }
+    profiles: [full]
+    image: redis:alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy volatile-lru --appendonly yes
+    volumes:
+      - redis_data:/data
+    deploy: { resources: { limits: { memory: 320m } } }
+
+  worker:
+    <<: *app
+    profiles: [full]
+    command: taskiq worker project.worker:broker --workers ${TASK_WORKERS:-1}
+    depends_on: [redis]
+    deploy: { resources: { limits: { memory: 300m } } }
+
+  # Перед запуском новой версии (автовыкладка): модели для API не отстали, миграции, статика.
+  # Упало — новая версия не запускается, работает прежняя. Миграции должны быть совместимы
+  # с прежним кодом: несколько секунд он работает с новой схемой
+  deploy:
+    <<: *app
+    profiles: [deploy]
+    command: >
+      sh -c 'python manage.py sync_async_models --check
+      && python manage.py migrate --noinput
+      && python manage.py collectstatic --noinput'
+    deploy: { resources: { limits: { memory: 300m } } }
+
+  # Задачи по расписанию (уборка и свои) — project/crontab, формат как у обычного cron. supercronic —
+  # cron для контейнеров: вывод задач — в docker compose logs cron, задача не запускается второй раз,
+  # пока не закончилась первая. Новая задача — строка в project/crontab, на сервер её привезёт выкладка.
+  # stop_grace_period: при остановке supercronic ждёт идущую задачу, а compose запускает новые
+  # контейнеры, только пересоздав все — сайт ждал бы вместе с ним (Docker — до 10 секунд). Через
+  # секунду задача прерывается: длинная должна уметь продолжить с места, где её оборвали
+  cron:
+    <<: *app
+    command: supercronic /usr/www/app/project/crontab
+    stop_grace_period: 1s
+    deploy: { resources: { limits: { memory: 200m } } }
+
+volumes:
+  redis_data:
+
+networks:
+  default:
+    name: proj-${COMPOSE_PROJECT_NAME}
+    external: true

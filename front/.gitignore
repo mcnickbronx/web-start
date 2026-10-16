@@ -1,0 +1,11 @@
+node_modules/
+.nuxt/
+.output/
+.data/
+dist/
+.DS_Store
+.idea/
+.vscode/
+
+# Адрес API и прочее — у каждого окружения своё, шаблон в .env.txt
+.env

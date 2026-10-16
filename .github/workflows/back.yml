@@ -1,0 +1,90 @@
+# Бэкенд: проверки и тесты на каждый push в dev, main и try-* и на pull request. После них на push —
+# образ ghcr.io/<владелец>/web-start-back под именем ветки и полным хешем коммита. Сервер выкладывает
+# тот, что в его DEPLOY_IMAGE (docs/deploy.md): dev-проект — :dev, сам за веткой; сайт — :<хеш>,
+# переходит на новый, когда хеш сменят; :try-* — попробовать ветку на dev-проекте. На push — без фильтра
+# по папкам: образ нужен у каждого коммита, на который ставят сайт, — фронт и бэкенд сайта стоят на одном хеше.
+name: back
+
+"on":
+  push:
+    branches: [dev, main, "try-*"]
+  pull_request:
+    paths: [back/**, .github/workflows/back.yml]
+  workflow_dispatch:          # вручную, вкладка Actions → Run workflow: собрать и выложить ветку заново
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # как на серверах (postgres_version); официальный образ с зеркала AWS — у Docker Hub лимит
+        # на скачивания без входа, и раннеры GitHub в него упираются
+        image: public.ecr.aws/docker/library/postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: back/requirements.txt
+      - run: pip install -r requirements.txt
+
+      # Как на сервере: владелец своей базы, не суперпользователь — миграция с CREATE EXTENSION
+      # упадёт здесь, а не при выкладке. CREATEDB — только чтобы тесты создали test_app
+      - name: База для тестов
+        env: { PGHOST: localhost, PGUSER: postgres, PGPASSWORD: postgres }
+        run: |
+          psql -c "CREATE ROLE app LOGIN CREATEDB PASSWORD 'app'"
+          createdb -O app app
+
+      - name: .env для тестов
+        run: |
+          cp .env.txt .env
+          sed -i 's/^DEV_DB_NAME=.*/DEV_DB_NAME=app/; s/^DEV_DB_USER=.*/DEV_DB_USER=app/; s/^DEV_DB_PASSWORD=.*/DEV_DB_PASSWORD=app/' .env
+
+      - name: Проверки и тесты
+        working-directory: back/app
+        run: |
+          python manage.py check
+          python manage.py sync_async_models --check
+          python manage.py makemigrations --check --dry-run
+          python manage.py test --noinput
+
+  image:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: image-${{ github.ref }}
+      cancel-in-progress: true                  # два push подряд — собирается последний
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+        with:
+          # сборщик — с зеркала Google, не с Docker Hub: у того лимит скачиваний без входа
+          driver-opts: image=mirror.gcr.io/moby/buildkit:buildx-stable-1
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: back
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}-back:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}-back:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

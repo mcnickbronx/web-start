@@ -1,0 +1,30 @@
+# Фронт — движок сайтов: тесты, проверка типов и сборка демо-сайта на каждый push в dev и main
+# и на pull request. Выкладывать нечего: сайты собирают движок сами, из тега или коммита в extends, —
+# поэтому сломанный коммит ловим здесь, раньше, чем сайт поставит его себе.
+name: front
+
+"on":
+  push:
+    branches: [dev, main]
+    paths: [front/**, .github/workflows/front.yml]
+  pull_request:
+    paths: [front/**, .github/workflows/front.yml]
+  workflow_dispatch:          # вручную, вкладка Actions → Run workflow
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24                      # как в сборке сайта (node:24-alpine)
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+      - run: npm ci
+      - run: npm run test
+      - run: npm run typecheck
+      - run: npm run build                      # так движок собирают сайты

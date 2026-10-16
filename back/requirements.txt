@@ -1,0 +1,25 @@
+django==6.1.1
+django-environ==0.14.0
+# Админка: фильтр списка с поиском по связи (заявки → «Форма»)
+django-admin-autocomplete-filter==0.7.1
+psycopg[binary]==3.3.5
+
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+tortoise-orm[asyncpg]==1.1.8
+pyjwt==2.14.0
+
+taskiq==0.12.6
+taskiq-redis==1.2.3
+
+# Модуль page: Markdown → HTML, очистка HTML, ужатие картинок
+markdown-it-py[linkify]==4.2.0
+nh3==0.3.7
+Pillow==12.3.0
+
+# Модуль form: загрузка файлов в API, проверка Яндекс SmartCaptcha
+python-multipart==0.0.32
+aiohttp==3.14.3
+
+# Тесты: клиент FastAPI (python manage.py test)
+httpx2==2.13.1
