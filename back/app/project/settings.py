@@ -41,14 +41,15 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 INSTALLED_APPS = [
     # core — первым: его runserver перекрывает стандартный из staticfiles
     "core",
+    # Фильтр списка с подсказками по связи и сворачиваемая панель фильтров. Выше django.contrib.admin:
+    # его шаблон списка дополняет стандартный
+    "admin_filter_kit",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Фильтр списка в админке с поиском по связи: справочник большой — список не помещается
-    "admin_auto_filters",
     "log",
     "user",
     # Необязательные модули: убрать — migrate <модуль> zero, потом строку и папку

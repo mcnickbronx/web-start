@@ -1,4 +1,4 @@
-"""Список заявок в админке: фильтр «Форма» с поиском (пакет admin_auto_filters) и его подсказки."""
+"""Список заявок в админке: фильтр «Форма» (пакет django-admin-filter-kit) и его подсказки."""
 from django.test import TestCase
 from django.urls import reverse
 
@@ -17,9 +17,9 @@ class FormRequestAdminTest(TestCase):
         create_form_request(form_type=feedback, phone="+79990000002")
         url = reverse("admin:form_formrequest_changelist")
         response = self.client.get(url)
-        self.assertContains(response, 'id="id-form_type__pk__exact-dal-filter"')
-        self.assertContains(response, "core/admin.js")  # шаблон админки ядра: сворачиваемая панель фильтров
-        response = self.client.get(url, {"form_type__pk__exact": feedback.pk})
+        self.assertContains(response, 'data-lookup="form_type__id__exact"')
+        self.assertContains(response, "admin_filter_kit/collapse.js")  # сворачиваемая панель фильтров
+        response = self.client.get(url, {"form_type__id__exact": feedback.pk})
         self.assertContains(response, "+79990000002")
         self.assertNotContains(response, "+79990000001")
 

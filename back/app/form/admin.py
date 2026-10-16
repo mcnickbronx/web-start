@@ -1,5 +1,6 @@
 import json
 
+from admin_filter_kit.filters import AutocompleteFilter
 from django import forms
 from django.contrib import admin, messages
 from django.http import FileResponse, Http404
@@ -7,7 +8,6 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from fastapi import HTTPException
 
-from core.admin_filters import AutocompleteFilter
 from core.user_agent import describe_user_agent
 from form import services
 from form.models import FormFile, FormRequest, FormType
@@ -75,19 +75,13 @@ class FormFileInline(admin.TabularInline):
         return format_html('<a href="{}">{}</a>', reverse("admin:form_formrequest_file", args=[obj.id]), obj.original_name)
 
 
-class FormTypeFilter(AutocompleteFilter):
-    """Фильтр «Форма» с поиском по названию и коду: форм бывают сотни, списком в панели не помещаются."""
-
-    title = "Форма"
-    field_name = "form_type"
-
-
 @admin.register(FormRequest)
 class FormRequestAdmin(admin.ModelAdmin):
     form = FormRequestForm
     list_display = ["__str__", "date_add", "form_type", "name", "phone", "email", "channel", "status", "email_status"]
     list_editable = ["status"]
-    list_filter = ["status", "channel", FormTypeFilter, utm_filter("utm_source"), utm_filter("utm_campaign"), "email_status"]
+    # «Форма» — с подсказками по названию и коду: форм бывают сотни, списком в панели не помещаются
+    list_filter = ["status", "channel", ("form_type", AutocompleteFilter), utm_filter("utm_source"), utm_filter("utm_campaign"), "email_status"]
     list_select_related = ["form_type"]
     search_fields = ["name", "phone", "email", "message"]
     date_hierarchy = "date_add"
