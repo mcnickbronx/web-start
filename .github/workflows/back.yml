@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        # как на серверах (postgres_version); официальный образ с зеркала AWS — у Docker Hub лимит
-        # на скачивания без входа, и раннеры GitHub в него упираются
-        image: public.ecr.aws/docker/library/postgres:17
+        # как на серверах (postgres_version); официальный образ с зеркала Google — у Docker Hub лимит
+        # на скачивания без входа, у зеркала AWS — тоже, и раннеры GitHub в них упираются
+        image: mirror.gcr.io/library/postgres:17
         env:
           POSTGRES_PASSWORD: postgres
         ports: ["5432:5432"]

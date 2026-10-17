@@ -1,5 +1,6 @@
-# Официальный python:3.14-slim с зеркала AWS: у Docker Hub лимит скачиваний без входа, CI в него упирается
-FROM public.ecr.aws/docker/library/python:3.14-slim
+# Официальный python:3.14-slim с зеркала Google: у Docker Hub и зеркала AWS лимит скачиваний без входа,
+# CI в него упирается
+FROM mirror.gcr.io/library/python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
