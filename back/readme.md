@@ -80,21 +80,26 @@ app/<module>/
 ├── models_async.py   # Tortoise-модели для API — генерируются, руками не править
 ├── schemas.py     # Pydantic-схемы запросов и ответов (*In / *Out)
 ├── services.py    # логика; эндпоинты и задачи вызывают её
-└── rest.py        # router = APIRouter() → /api/<module>/...
+├── rest.py        # router = APIRouter() → /api/<module>/...
+└── tests/         # тесты, хелперы в tests/create.py
 ```
 
 `rest.py` подключается автоматически, регистрировать роутер не нужно.
 
 Новый модуль — по шагам, из `app/`:
 
-1. `python manage.py startapp <module>` — папка с `apps.py` и `migrations/`. `views.py` и `tests.py`
-   удалить: эндпоинты — в `rest.py`, тесты — в папке `tests/`.
-2. В `apps.py` — `verbose_name`: так модуль называется в админке и в Swagger.
+1. `python manage.py startapp <module> --template=core/module_template` — папка со всеми файлами
+   модуля, `tests/` и заготовкой `readme.md`. Главное в ней — `tests/__init__.py`: без него Django
+   не находит тесты модуля и молча их пропускает.
+2. В `apps.py` — `verbose_name` по-русски: так модуль называется в админке и в Swagger.
 3. Модуль — строкой в `INSTALLED_APPS` (`project/settings.py`).
-4. Модели → `makemigrations` → `sync_async_models` → `migrate`.
-5. `schemas.py`, `services.py`, `rest.py` с `router = APIRouter()` — эндпоинты появятся
-   на `/api/<module>/`.
-6. `readme.md` модуля — в том же коммите, строкой в оглавление ниже.
+4. Модели → `makemigrations` → `sync_async_models` → `migrate`, админка — в `admin.py`.
+5. `schemas.py`, `services.py`, `rest.py` — эндпоинты появятся на `/api/<module>/`. Поменялось
+   API — `npm run api:types` во `front/`: [типы API для фронта](docs/commands.md#типы-api-для-фронта).
+6. Тесты — `tests/test_<фича>.py`, хелперы создания объектов — `tests/create.py`; как писать —
+   [правила тестов](CLAUDE.md#тесты), запуск — `python manage.py test <module> --keepdb`.
+7. `readme.md` модуля — в том же коммите, строкой в оглавление ниже. Что почувствуют сайты —
+   строкой в `CHANGELOG.md`, по [правилу репозитория](../CLAUDE.md).
 
 ## Как писать модуль
 

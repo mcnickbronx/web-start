@@ -46,6 +46,9 @@
 Модуль — обычное Django-приложение из `INSTALLED_APPS`. `rest.py` подключается
 автоматически — регистрировать роутер не нужно.
 
+Новый модуль — `python manage.py startapp <module> --template=core/module_template`, шаги — в [readme.md](readme.md#модуль).
+Поменял правило о файлах модуля — поправь шаблон `app/core/module_template/` в том же коммите.
+
 ```
 app/<module>/
 ├── apps.py          # verbose_name — раздел в админке и в Swagger

@@ -24,6 +24,9 @@
   `admin_filter_kit.filters.AutocompleteFilter`: `list_filter = [("поле", AutocompleteFilter)]`,
   `field_name` не нужен, свой заголовок — подклассом с `title`.
 - Django 6.1.2 и PyJWT 2.15.1 — выпуски с исправлениями безопасности. Миграций нет, настройки те же.
+- Ядро: заготовка нового модуля — `python manage.py startapp <модуль> --template=core/module_template`
+  (шаги — `back/readme.md`, «Модуль»): все файлы модуля сразу, с `tests/__init__.py`. Сайтам ничего
+  делать не нужно.
 
 ## 2.3.0 — 17.10.2026
 
