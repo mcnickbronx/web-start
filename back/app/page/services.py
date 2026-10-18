@@ -5,7 +5,6 @@
 при сохранении в админке, а API отдаёт готовое.
 """
 import io
-import re
 import uuid
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -17,6 +16,7 @@ from django.utils import timezone
 from PIL import Image, ImageOps
 from tortoise.expressions import Q, Subquery
 
+from core.slug import slugify_text
 from page import conf, models, models_async
 from page.markdown import excerpt_from_html, render_markdown
 
@@ -26,15 +26,6 @@ from page.markdown import excerpt_from_html, render_markdown
 SLUG_RESERVED_LIST = ["admin", "api", "static", "media", "_nuxt"]
 
 IMAGE_EXTENSION_LIST = ["jpg", "jpeg", "png", "gif", "webp"]
-
-# Транслит для слагов. Свой словарь: предсказуемый адрес и никаких сюрпризов при обновлении библиотеки
-TRANSLIT_MAP = {
-    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
-    "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
-    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
-    "ф": "f", "х": "h", "ц": "c", "ч": "ch", "ш": "sh", "щ": "sch",
-    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
-}
 
 
 def build_path(slug: str, category_slug: str | None = None) -> str:
@@ -49,13 +40,6 @@ def clean_path(value: str) -> str:
 
 
 # --- Слаги (админка) -------------------------------------------------------------------
-
-def slugify_text(value: str, length_max: int = 200) -> str:
-    """Строка → слаг: транслит кириллицы, латиница, цифры и дефис."""
-    value = "".join(TRANSLIT_MAP.get(char, char) for char in (value or "").strip().lower())
-    value = re.sub(r"[^a-z0-9]+", "-", value)
-    return value.strip("-")[:length_max].strip("-")
-
 
 def _is_slug_taken(slug: str, model: type[models.PageCategory | models.Page], pk: int | None) -> bool:
     """Занят ли слаг другой рубрикой или страницей. Проверяем обе таблицы: рубрики и страницы

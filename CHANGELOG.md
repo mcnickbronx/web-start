@@ -23,6 +23,8 @@
 - Проекту на движке со своими фильтрами из `core.admin_filters` (файла больше нет) — фильтр
   `admin_filter_kit.filters.AutocompleteFilter`: `list_filter = [("поле", AutocompleteFilter)]`,
   `field_name` не нужен, свой заголовок — подклассом с `title`.
+- Ядро: слаг из текста — `core.slug.slugify_text` (был в `page.services`): тот же транслит
+  для адресов любого модуля. Сайтам ничего делать не нужно; импорт из `page.services` работает по-прежнему.
 - Django 6.1.2 и PyJWT 2.15.1 — выпуски с исправлениями безопасности. Миграций нет, настройки те же.
 - Ядро: заготовка нового модуля — `python manage.py startapp <модуль> --template=core/module_template`
   (шаги — `back/readme.md`, «Модуль»): все файлы модуля сразу, с `tests/__init__.py`. Сайтам ничего
