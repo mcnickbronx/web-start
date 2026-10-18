@@ -48,7 +48,7 @@ front/
 
 ```bash
 npm install
-cp .env.txt .playground/.env   # NUXT_PUBLIC_API_BASE — адрес бэкенда, NUXT_PUBLIC_SITE_URL — сайта
+cp .env.txt .playground/.env   # все настройки — с описанием в .env.txt
 npm run dev                    # http://localhost:3000
 ```
 
@@ -87,7 +87,8 @@ export default defineNuxtConfig({
   прочитать [CHANGELOG.md](../CHANGELOG.md). Между выпусками — полный хеш коммита `main`
   вместо тега (`#bfddda7f…`), но не ветка: она меняется. Бэкенд сайта — на тот же хеш,
   раньше фронта ([порядок](../readme.ru.md#версии)).
-- `.env` сайта — как в `.env.txt`: адрес бэкенда сайта и адрес самого сайта.
+- `.env` сайта — по `.env.txt`: там все настройки движка с описанием (адреса бэкенда и сайта, открыт ли
+  сайт для поиска, счётчик Метрики). Появилась новая — строкой туда же и в `.env.txt` шаблона сайта.
 
 Как сайт делает себе свой вид, не теряя обновлений движка:
 - **Своё целиком** — `app/layouts/default.vue` (шапка и подвал), `app/pages/index.vue`
