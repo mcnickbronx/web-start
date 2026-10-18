@@ -6,7 +6,7 @@ from django.core import mail
 from core.tests.api import ApiTestCase
 from user import models, models_async
 from user.services import issue_code
-from user.tests.create import PASSWORD, create_user
+from user.tests.create import PASSWORD, auth_header, create_user
 
 
 class AuthTest(ApiTestCase):
@@ -83,7 +83,7 @@ class AuthTest(ApiTestCase):
 
     def test_password_change_revokes_tokens(self):
         user = create_user()
-        old = self.auth(user)
+        old = auth_header(user)
         body = {"password_current": PASSWORD, "password_new": "Nov-parol-2026", "password_new_confirm": "Nov-parol-2026"}
         new_access = self.api.post("/api/user/password/change", headers=old, json=body).json()["access"]
         self.assertEqual(self.api.get("/api/user/me", headers=old).status_code, 401)

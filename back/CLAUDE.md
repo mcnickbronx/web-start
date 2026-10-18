@@ -133,7 +133,8 @@ app/<module>/
   `form_type = form_type or FormType.objects.first() or create_form_type()`. Тест передаёт только важное ему
 - Тест API и всё, что ходит в базу через Tortoise (мост `.sync()`), — `ApiTestCase` из `core/tests/api.py`
   (или `TransactionTestCase`): Tortoise не видит незакоммиченного, а `TestCase` держит тест в транзакции.
-  `self.api` — клиент FastAPI, `self.auth(user)` — заголовок с токеном, `self.wait_tasks()` — дождаться фоновых задач.
+  `self.api` — клиент FastAPI, `self.wait_tasks()` — дождаться фоновых задач;
+  заголовок с токеном — `auth_header(user)` из `user/tests/create.py`.
   Логика только на Django (админка, слаги) — обычный `TestCase`: он быстрее
 - Тесты идут без Redis: задачи выполняются в процессе, письма — в `django.core.mail.outbox`
 
