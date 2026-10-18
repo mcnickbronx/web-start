@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import patch
 
 from django.core import mail
 from django.urls import reverse
@@ -52,6 +53,7 @@ class FormApiTest(ApiTestCase):
         self.assertEqual(FormRequest.objects.get().status, "spam")
         self.assertEqual(mail.outbox, [])
 
+    @patch.object(conf, "CAPTCHA_PROVIDER", "numeric")
     def test_numeric_captcha(self):
         create_form_type(is_captcha=True)
         form = self.open_form()
