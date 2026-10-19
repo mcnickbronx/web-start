@@ -75,6 +75,21 @@ class FormRequest(Model):
         return f"FormRequest {self.pk}"
 
 
+class FormRequestHistory(Model):
+    id = fields.BigIntField(primary_key=True)
+    date = fields.DatetimeField(auto_now_add=True)
+    user = fields.ForeignKeyField("models.CustomUser", related_name=False, on_delete=fields.NO_ACTION, null=True, db_constraint=False)
+    changes = fields.JSONField(default=dict)
+    record = fields.ForeignKeyField("models.FormRequest", related_name="history", on_delete=fields.NO_ACTION)
+
+    class Meta:
+        table = "form_formrequesthistory"
+        ordering = ['-id']
+
+    def __str__(self):
+        return f"FormRequestHistory {self.pk}"
+
+
 class FormFile(Model):
     """Файл к заявке. Загружается до отправки заявки и привязывается к ней при отправке."""
 

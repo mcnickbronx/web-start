@@ -8,6 +8,7 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from fastapi import HTTPException
 
+from core.history_admin import HistoryAdmin
 from core.user_agent import describe_user_agent
 from core.xlsx import export_xlsx
 from form import services
@@ -77,8 +78,9 @@ class FormFileInline(admin.TabularInline):
 
 
 @admin.register(FormRequest)
-class FormRequestAdmin(admin.ModelAdmin):
+class FormRequestAdmin(HistoryAdmin):
     form = FormRequestForm
+    history_fields = ["status"]
     list_display = ["__str__", "date_add", "form_type", "name", "phone", "email", "channel", "status", "email_status"]
     list_editable = ["status"]
     # «Форма» — с подсказками по названию и коду: форм бывают сотни, списком в панели не помещаются

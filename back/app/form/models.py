@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 
+from core.history import HistoryModel
 from form import conf
 
 
@@ -106,6 +107,10 @@ class FormRequest(models.Model):
 
     def __str__(self):
         return f"Заявка №{self.pk}"
+
+
+class FormRequestHistory(HistoryModel):
+    record = models.ForeignKey(FormRequest, models.CASCADE, related_name="history", verbose_name="Заявка")
 
 
 class FormFile(models.Model):
