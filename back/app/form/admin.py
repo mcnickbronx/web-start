@@ -9,6 +9,7 @@ from django.utils.html import format_html
 from fastapi import HTTPException
 
 from core.user_agent import describe_user_agent
+from core.xlsx import export_xlsx
 from form import services
 from form.models import FormFile, FormRequest, FormType
 
@@ -86,7 +87,7 @@ class FormRequestAdmin(admin.ModelAdmin):
     search_fields = ["name", "phone", "email", "message"]
     date_hierarchy = "date_add"
     inlines = [FormFileInline]
-    actions = ["resend_email"]
+    actions = ["resend_email", export_xlsx]
     readonly_fields = [
         "form_type", "user", "name", "phone", "email", "message", "data_display", "source", "ip",
         "channel", "landing_page", "referrer", "utm_display", "ym_client_id", "browser", "user_agent",

@@ -2,6 +2,8 @@ django==6.1.2
 django-environ==0.14.0
 # Админка: фильтр списка с подсказками по связи (заявки → «Форма»), сворачиваемая панель фильтров
 django-admin-filter-kit==0.2.0
+# Админка: выгрузка списка в Excel (core/xlsx.py)
+openpyxl==3.1.5
 psycopg[binary]==3.3.5
 
 fastapi==0.141.1

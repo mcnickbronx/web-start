@@ -66,6 +66,8 @@ app/<module>/
 Фильтр списка в админке по связи с большим справочником — `AutocompleteFilter` из `admin_filter_kit.filters`:
 `list_filter = [("поле", AutocompleteFilter)]`, свой заголовок — подклассом с `title`; у админки справочника нужны `search_fields`.
 
+Выгрузка списка админки в Excel — `export_xlsx` из `core.xlsx` в `actions`: колонки как в `list_display`, свою выгрузку не писать.
+
 Слаг публичного адреса (страница, товар, рубрика) — `slugify_text` из `core.slug`, не `prepopulated_fields`: транслит один для всех модулей.
 
 По мере разрастания — отдельными файлами:

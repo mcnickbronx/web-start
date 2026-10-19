@@ -16,6 +16,9 @@
   локально — обновить Node, иначе `npm install` выдаёт предупреждения `EBADENGINE`.
 
 **Бэкенд**
+- Админка: выгрузка списка в Excel — действие «Выгрузить в Excel» (`core.xlsx.export_xlsx`), колонки как в списке;
+  первые — заявки. Новая зависимость `openpyxl` — она уже в образе бэкенда; локально — `pip install -r requirements.txt`.
+  Миграций нет, сайту ничего делать не нужно. Проекту на движке — `export_xlsx` в `actions` своей админки.
 - Админка: фильтр «Форма» в заявках и сворачиваемая панель фильтров — из пакета
   [`django-admin-filter-kit`](https://pypi.org/project/django-admin-filter-kit/) вместо
   `django-admin-autocomplete-filter` и своего кода в `core`. Для того, кто работает в админке, всё
