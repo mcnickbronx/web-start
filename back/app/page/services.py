@@ -9,6 +9,7 @@ import uuid
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import UploadedFile
@@ -162,7 +163,10 @@ def optimize_image(content: bytes, extension: str) -> tuple[bytes, str]:
 def prepare_image(image: models.PageImage, upload: UploadedFile) -> None:
     """Новый файл картинки: проверка, оптимизация, имя и размер. Сохраняет вызывающий."""
     extension = check_image(upload)
-    upload.seek(0)  # форма админки уже читала файл, проверяя, что это картинка
+    # Картинка ли это: Pillow должен её прочесть. В «Картинках» это уже проверило поле формы, у редактора текста
+    # поля нет — без проверки битый файл с расширением картинки лёг бы в текст: optimize_image отдаёт его как есть
+    forms.ImageField().to_python(upload)
+    upload.seek(0)  # файл уже читали — форма и проверка выше
     content, extension = optimize_image(upload.read(), extension)
     image.original_name = (upload.name or "")[:255]
     image.size = len(content)
