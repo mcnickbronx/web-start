@@ -4,6 +4,9 @@
 
 Читается при запуске Django (apps.py): неверное значение в .env остановит и manage.py, и выкладку
 до миграций, а не только API.
+
+Умолчания названы словами в описаниях Swagger (rest.py, schemas.py) и в readme модуля и слоя user
+фронта, с пометкой «по умолчанию»: поменял умолчание здесь — найди поиском и поправь там.
 """
 from datetime import timedelta
 
@@ -18,11 +21,18 @@ JWT_REFRESH_LIFETIME = timedelta(days=env_int("USER_JWT_REFRESH_LIFETIME_DAYS", 
 # access длиннее refresh бессмысленен: сессию, которую не продлевали дольше срока refresh,
 # уберёт следующий вход, и живой access перестанет работать
 if JWT_ACCESS_LIFETIME > JWT_REFRESH_LIFETIME:
-    raise ImproperlyConfigured("USER_JWT_ACCESS_LIFETIME_HOURS: access не длиннее refresh (USER_JWT_REFRESH_LIFETIME_DAYS)")
+    raise ImproperlyConfigured(
+        f"USER_JWT_ACCESS_LIFETIME_HOURS={JWT_ACCESS_LIFETIME.total_seconds() / 3600:g}: "
+        f"access не длиннее refresh, USER_JWT_REFRESH_LIFETIME_DAYS={JWT_REFRESH_LIFETIME.days}"
+    )
 
 #: Код подтверждения живёт полчаса, новое письмо с кодом — не чаще раза в минуту
 CONFIRMATION_CODE_LIFETIME = timedelta(minutes=env_int("USER_CONFIRMATION_CODE_LIFETIME_MINUTES", 30))
-CONFIRMATION_CODE_RESEND_INTERVAL = timedelta(seconds=env_int("USER_CONFIRMATION_CODE_RESEND_SECONDS", 60))
+#: Не чаще раза в 30 секунд: интервал вместе с попытками сдерживает перебор, а частые письма на чужой
+#: адрес — уже рассылка. И короче срока кода: иначе код истёк, а новый ещё не попросить
+CONFIRMATION_CODE_RESEND_INTERVAL = timedelta(seconds=env_int("USER_CONFIRMATION_CODE_RESEND_SECONDS", 60, min_value=30))
+if CONFIRMATION_CODE_RESEND_INTERVAL >= CONFIRMATION_CODE_LIFETIME:
+    raise ImproperlyConfigured("USER_CONFIRMATION_CODE_RESEND_SECONDS: меньше срока кода USER_CONFIRMATION_CODE_LIFETIME_MINUTES")
 #: После 5 неверных попыток код сгорает — иначе 6 цифр подбираются перебором. Больше 10 не дать:
 #: опечатка вроде 500 молча сняла бы защиту
 CONFIRMATION_CODE_ATTEMPTS = env_int("USER_CONFIRMATION_CODE_ATTEMPTS", 5, max_value=10)

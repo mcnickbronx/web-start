@@ -3,6 +3,7 @@ import io
 import shutil
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 from django.contrib.auth.models import Permission
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -49,6 +50,7 @@ class ImageUploadTest(TestCase):
     def upload(self, file):
         return self.client.post(reverse("admin:page_page_upload_image"), {"image": file})
 
+    @mock.patch.object(conf, "IMAGE_WIDTH_MAX", 1600)
     def test_editor(self):
         """Из редактора: ужата до IMAGE_WIDTH_MAX, webp, исходное имя сохранено, файл на диске."""
         response = self.upload(image_file())

@@ -9,5 +9,5 @@
 
 CRON_TZ=Europe/Moscow
 
-0 4 * * *     python manage.py clear_log --days 90
+0 4 * * *     python manage.py clear_log
 30 4 * * *    python manage.py clear_form_files

@@ -43,6 +43,7 @@ class FormApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 406)
         self.assertIn("Заявка уже отправлена", response.json()["message"])
 
+    @patch.object(conf, "FILL_SECONDS_MIN", 3)
     def test_bot_saved_as_spam_without_email(self):
         create_form_type(is_trap=True)
         form = self.open_form()

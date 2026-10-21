@@ -6,6 +6,7 @@ class LogConfig(AppConfig):
     verbose_name = "Журнал"
 
     def ready(self):
+        from log import conf  # noqa: F401 — настройки из .env проверяются при запуске, а не с первой уборкой
         # Слушатель очереди — один на процесс: API, админка, воркер, любая команда manage.py
         from log.handlers import start_listener
 

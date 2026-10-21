@@ -23,17 +23,24 @@ if CAPTCHA_PROVIDER == "yandex" and not (SMARTCAPTCHA_SERVER_KEY and SMARTCAPTCH
 #: Сколько живёт открытая форма: токен из описания формы
 TOKEN_LIFETIME = timedelta(minutes=env_int("FORM_TOKEN_LIFETIME_MINUTES", 120))
 #: Форма отправлена быстрее — это бот (ловушка по времени), 0 — ловушки нет. Сайт ждёт столько же сам:
-#: число уходит ему в описании формы, чтобы человек, вставивший телефон из буфера, не попал в спам
-FILL_SECONDS_MIN = env_int("FORM_FILL_SECONDS_MIN", 3, min_value=0)
+#: число уходит ему в описании формы, чтобы человек, вставивший телефон из буфера, не попал в спам.
+#: Не больше минуты: 3000 «в миллисекундах» заставило бы сайт ждать, пока форма устареет
+FILL_SECONDS_MIN = env_int("FORM_FILL_SECONDS_MIN", 3, min_value=0, max_value=60)
 
 #: Файлы заявок — в закрытой папке, вне media/: media/ открыта всем по прямой ссылке
 FILE_ROOT = settings.BASE_DIR.parent / "private" / "form"
-#: Форматы и размер уходят сайту в описании формы — проверка на сайте подстроится сама
-FILE_EXTENSION_LIST = env_list("FORM_FILE_EXTENSION_LIST", ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"])
-#: Файл читается в память целиком — поэтому не больше 100 МБ
-FILE_SIZE_MAX_MB = env_int("FORM_FILE_SIZE_MAX_MB", 10, max_value=100)
+#: Форматы и размер проверяет бэкенд, ошибка называет их посетителю. Точку в начале («.pdf») снимаем:
+#: иначе ни один файл не подошёл бы
+FILE_EXTENSION_LIST = [item.lstrip(".") for item in env_list("FORM_FILE_EXTENSION_LIST", ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"])]
+#: Файл читается в память целиком, а у контейнера лимит памяти (compose.yml) — поэтому не больше 50 МБ
+FILE_SIZE_MAX_MB = env_int("FORM_FILE_SIZE_MAX_MB", 10, max_value=50)
 #: Файлы, так и не приложенные к заявке, старше этого удаляет команда clear_form_files
 FILE_ORPHAN_HOURS = env_int("FORM_FILE_ORPHAN_HOURS", 24)
 # Уборка раньше конца жизни формы удалила бы файлы, которые посетитель ещё приложит
 if timedelta(hours=FILE_ORPHAN_HOURS) < TOKEN_LIFETIME:
-    raise ImproperlyConfigured("FORM_FILE_ORPHAN_HOURS: не меньше срока формы FORM_TOKEN_LIFETIME_MINUTES")
+    raise ImproperlyConfigured(
+        f"FORM_FILE_ORPHAN_HOURS={FILE_ORPHAN_HOURS}: не меньше срока формы FORM_TOKEN_LIFETIME_MINUTES={TOKEN_LIFETIME.total_seconds() // 60:.0f}"
+    )
+# Ждать дольше, чем живёт форма, — заявка не уйдёт никогда
+if timedelta(seconds=FILL_SECONDS_MIN) >= TOKEN_LIFETIME:
+    raise ImproperlyConfigured("FORM_FILL_SECONDS_MIN: меньше срока формы FORM_TOKEN_LIFETIME_MINUTES")
