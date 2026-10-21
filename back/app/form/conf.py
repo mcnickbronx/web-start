@@ -7,16 +7,14 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from core.env import env, env_int, env_list
+from core.env import env_int, env_list, env_str
 
 #: Капча: numeric — пример с числами, работает без ключей; yandex — Яндекс SmartCaptcha
-CAPTCHA_PROVIDER = env("FORM_CAPTCHA_PROVIDER", default="numeric")
-SMARTCAPTCHA_SERVER_KEY = env("FORM_SMARTCAPTCHA_SERVER_KEY", default="")
+CAPTCHA_PROVIDER = env_str("FORM_CAPTCHA_PROVIDER", "numeric", choice_list=["numeric", "yandex"])
+SMARTCAPTCHA_SERVER_KEY = env_str("FORM_SMARTCAPTCHA_SERVER_KEY", "", is_secret=True)
 #: Ключ для виджета на сайте — отдаётся фронту в описании формы
-SMARTCAPTCHA_CLIENT_KEY = env("FORM_SMARTCAPTCHA_CLIENT_KEY", default="")
+SMARTCAPTCHA_CLIENT_KEY = env_str("FORM_SMARTCAPTCHA_CLIENT_KEY", "", is_secret=True)
 
-if CAPTCHA_PROVIDER not in ("numeric", "yandex"):
-    raise ImproperlyConfigured(f"FORM_CAPTCHA_PROVIDER={CAPTCHA_PROVIDER}: допустимо numeric или yandex")
 if CAPTCHA_PROVIDER == "yandex" and not (SMARTCAPTCHA_SERVER_KEY and SMARTCAPTCHA_CLIENT_KEY):
     raise ImproperlyConfigured("FORM_CAPTCHA_PROVIDER=yandex: нужны FORM_SMARTCAPTCHA_SERVER_KEY и FORM_SMARTCAPTCHA_CLIENT_KEY")
 
@@ -29,9 +27,8 @@ FILL_SECONDS_MIN = env_int("FORM_FILL_SECONDS_MIN", 3, min_value=0, max_value=60
 
 #: Файлы заявок — в закрытой папке, вне media/: media/ открыта всем по прямой ссылке
 FILE_ROOT = settings.BASE_DIR.parent / "private" / "form"
-#: Форматы и размер проверяет бэкенд, ошибка называет их посетителю. Точку в начале («.pdf») снимаем:
-#: иначе ни один файл не подошёл бы
-FILE_EXTENSION_LIST = [item.lstrip(".") for item in env_list("FORM_FILE_EXTENSION_LIST", ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"])]
+#: Форматы и размер проверяет бэкенд, ошибка называет их посетителю
+FILE_EXTENSION_LIST = env_list("FORM_FILE_EXTENSION_LIST", ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"])
 #: Файл читается в память целиком, а у контейнера лимит памяти (compose.yml) — поэтому не больше 50 МБ
 FILE_SIZE_MAX_MB = env_int("FORM_FILE_SIZE_MAX_MB", 10, max_value=50)
 #: Файлы, так и не приложенные к заявке, старше этого удаляет команда clear_form_files

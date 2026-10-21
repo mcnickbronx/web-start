@@ -201,6 +201,7 @@ docker compose exec redis redis-cli FLUSHALL    # очистить Redis цел�
 python manage.py check                       # общие ошибки конфигурации
 python manage.py check --deploy              # настройки безопасности для прода
 python manage.py sync_async_models --check   # модели для API не отстали
+python manage.py env_settings                # настройки модулей: что действует и откуда (.env или по умолчанию)
 python manage.py test --keepdb               # тесты: база test_<база>, Redis не нужен
 python manage.py test form --keepdb          # тесты одного модуля
 python manage.py test form.tests.test_admin --keepdb   # один файл; через точку дальше — класс, тест
