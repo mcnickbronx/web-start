@@ -55,8 +55,8 @@
   Подробно — [front/readme.md](front/readme.md#сайт-на-движке).
 - **Бэкенд сайта** — образ того же коммита: `DEPLOY_IMAGE=…/web-start-back:<хеш>` в `.env` сервера.
   Сменили хеш — сервер выложит новую версию сам. Подробно — [back/docs/deploy.md](back/docs/deploy.md#выкладка).
-- **Новый сайт** — свой репозиторий на Nuxt с этой строкой `extends` и бэкенд на своём сервере:
-  что нужно от сервера — [back/docs/deploy.md](back/docs/deploy.md#что-нужно-от-сервера).
+- **Новый сайт** — свой репозиторий из шаблона [web-site-starter](https://github.com/mcnickbronx/web-site-starter)
+  (заготовка для фронтенд-разработчика сайта) и бэкенд на своём сервере: что нужно от сервера — [back/docs/deploy.md](back/docs/deploy.md#что-нужно-от-сервера).
 
 ## Версии
 

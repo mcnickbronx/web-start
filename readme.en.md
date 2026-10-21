@@ -78,7 +78,9 @@ npm run dev                   # http://localhost:3000
 
 ## A site on the engine
 
-The site's `nuxt.config.ts` pulls the engine at a version tag:
+A new site starts from the template [web-site-starter](https://github.com/mcnickbronx/web-site-starter),
+a starter for the site's front-end developer: build, deploy, header, footer and a lead form are already there. The site's `nuxt.config.ts`
+pulls the engine at a version tag:
 
 ```ts
 export default defineNuxtConfig({
@@ -86,8 +88,8 @@ export default defineNuxtConfig({
 })
 ```
 
-The site overrides layouts, pages, components and colors; the engine brings data loading,
-SEO, forms and the blog. The site's backend is the Docker image of the same commit, built by
+The site brings its own layouts, pages and colors and may override engine components (not engine
+pages); the engine brings data loading, SEO, forms and the blog. The site's backend is the Docker image of the same commit, built by
 CI (`.github/workflows/back.yml`). The server setup (`back/compose.yml`) expects Traefik and
 a few shared files — what exactly is in [back/docs/deploy.md](back/docs/deploy.md#что-нужно-от-сервера).
 

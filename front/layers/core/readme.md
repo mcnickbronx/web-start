@@ -71,7 +71,8 @@ cookieNotice: { policyUrl: 'https://…/policy.pdf' }   // ссылка на п�
 cookieNotice: { isEnabled: false }                    // сайт без cookie — не показывать
 ```
 
-Свой вид — `app/components/CookieNotice.vue` сайта.
+Свой вид — `app/components/CookieNotice.vue` сайта. Всё, что сайт может поменять, —
+[таблица](../../readme.md#что-сайт-может-поменять).
 
 ## SEO по умолчанию
 
