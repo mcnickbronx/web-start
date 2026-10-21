@@ -1,7 +1,9 @@
 """История изменений заявок: правки статуса в админке и сервис с декоратором @history."""
 import asyncio
 
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from tortoise.transactions import in_transaction
 
@@ -50,6 +52,38 @@ class AdminHistoryTest(TestCase):
         self.client.post(reverse("admin:form_formrequest_delete", args=[self.request.id]), {"post": "yes"})
         self.assertFalse(FormRequestHistory.objects.exists())
 
+    def test_removed_field(self):
+        """Поле из истории у модели удалили или переименовали — страница заявки открывается, строка — под прежним именем."""
+        self.request.history.create(changes={"old_status": ["a", "b"], "old_phone": None, "status": ["new", "work"]})
+        response = self.client.get(reverse("admin:form_formrequest_change", args=[self.request.id]))
+        self.assertContains(response, "old_status: a → b")
+        self.assertContains(response, "old_phone: изменено")
+        self.assertContains(response, "Статус: Новая → В работе")
+
+    def test_several_fields(self):
+        """В строке истории несколько полей — каждое с новой строки; значения из истории экранируются."""
+        self.request.history.create(changes={"phone": None, "status": ["new", "work"], "old_note": ["<b>было</b>", "стало"]})
+        response = self.client.get(reverse("admin:form_formrequest_change", args=[self.request.id]))
+        self.assertContains(response, "Телефон: изменено<br>Статус: Новая → В работе")  # jsonb хранит ключи по длине
+        self.assertNotContains(response, "&lt;br&gt;")
+        self.assertContains(response, "old_note: &lt;b&gt;было&lt;/b&gt; → стало")
+
+    def test_history_queries(self):
+        """Блок «История» — одним запросом: запросов на странице заявки не больше от числа строк и их авторов."""
+        url = reverse("admin:form_formrequest_change", args=[self.request.id])
+
+        def page_queries():
+            with CaptureQueriesContext(connection) as queries:
+                self.client.get(url)
+            return len(queries)
+
+        self.request.history.create(user=self.admin, changes={"status": ["new", "work"]})
+        page_queries()  # первая страница в процессе ещё и кладёт типы моделей в кэш — считаем со второй
+        one_row = page_queries()
+        for email in ("first@example.com", "second@example.com"):
+            self.request.history.create(user=create_user(email=email), changes={"status": ["work", "done"]})
+        self.assertEqual(page_queries(), one_row)
+
 
 @with_sync
 @history(models_async.FormRequestHistory, ["status"])
@@ -66,6 +100,22 @@ class ServiceHistoryTest(ApiTestCase):
         self.api.portal.call(set_status, request.id, "work", user)
         record = FormRequestHistory.objects.get()
         self.assertEqual((record.user, record.changes), (user, {"status": ["new", "work"]}))
+
+    def test_user_id(self):
+        """Кто — id пользователя числом: в истории этот пользователь, а не система."""
+        user = create_user()
+        request = create_form_request()
+        self.api.portal.call(set_status, request.id, "work", user.id)
+        self.assertEqual(FormRequestHistory.objects.get().user, user)
+
+    def test_user_wrong_type(self):
+        """Кто — не пользователь, не id и не None: ошибка до вызова сервиса, а не молча «система»."""
+        request = create_form_request()
+        for user in ("x", True):  # True — тоже int в Python, но не id: без проверки стал бы пользователем №1
+            with self.subTest(user=user), self.assertRaisesMessage(TypeError, "user — пользователь, его id или None"):
+                self.api.portal.call(set_status, request.id, "work", user)
+        request.refresh_from_db()
+        self.assertEqual(request.status, "new")
 
     def test_unchanged(self):
         """Сервис ничего не поменял — строки нет."""

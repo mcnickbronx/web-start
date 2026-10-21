@@ -56,9 +56,10 @@ def history(model, fields: list[str], hidden: list[str] = ()):
         @history(models_async.FormRequestHistory, ["status"])
         async def set_status(form_request_id: int, status: str, user=None): ...
 
-    Запись — первый аргумент сервиса (её id), кто — аргумент user (None — система). Строку до вызова
-    читает с блокировкой, после — снова и пишет разницу в той же транзакции. Ничего не поменялось —
-    строки нет. hidden — поля, у которых пишется только факт изменения, без значений (телефон, email).
+    Запись — первый аргумент сервиса (её id), кто — аргумент user сервиса: пользователь или его id,
+    None — система. Строку до вызова читает с блокировкой, после — снова и пишет разницу в той же
+    транзакции. Ничего не поменялось — строки нет. hidden — поля, у которых пишется только факт
+    изменения, без значений (телефон, email).
     """
     def decorator(func):
         signature = inspect.signature(func)
@@ -67,6 +68,9 @@ def history(model, fields: list[str], hidden: list[str] = ()):
         async def wrapper(*args, **kwargs):
             arguments = signature.bind(*args, **kwargs).arguments
             record_id, user = next(iter(arguments.values())), arguments.get("user")
+            user_id = getattr(user, "pk", user)  # пользователь Django или Tortoise — его id
+            if user_id is not None and (not isinstance(user_id, int) or isinstance(user_id, bool)):
+                raise TypeError(f"@history: user — пользователь, его id или None, а не {user!r}")
             record_model = model._meta.fields_map["record"].related_model
             async with in_transaction():
                 # Блокировка — отдельным запросом: с .values() Tortoise молча теряет FOR UPDATE
@@ -75,7 +79,7 @@ def history(model, fields: list[str], hidden: list[str] = ()):
                 result = await func(*args, **kwargs)
                 after = await record_model.filter(id=record_id).values(*fields)
                 if before and after and (changes := diff(before[0], after[0], hidden)):
-                    await model.create(record_id=record_id, user_id=getattr(user, "id", None), changes=changes)
+                    await model.create(record_id=record_id, user_id=user_id, changes=changes)
             return result
         return wrapper
     return decorator

@@ -15,7 +15,7 @@ from log.handlers import DatabaseLogHandler, ProjectOnlyFilter, RecordQueueHandl
 from log.models import StatusLog
 
 
-def make_record(name="form.services", level=logging.WARNING, exc_info=None):
+def make_record(name="core.mailer", level=logging.WARNING, exc_info=None):
     return logging.LogRecord(name, level, __file__, 1, "Письмо по заявке %s не ушло", (7,), exc_info)
 
 
@@ -36,7 +36,7 @@ class ProjectOnlyFilterTest(SimpleTestCase):
     def test_only_project_modules(self):
         """В журнал — модули проекта; django и uvicorn — только в stdout."""
         log_filter = ProjectOnlyFilter()
-        self.assertTrue(log_filter.filter(make_record(name="form.services")))
+        self.assertTrue(log_filter.filter(make_record(name="log.handlers")))
         self.assertTrue(log_filter.filter(make_record(name="core.errors")))
         self.assertFalse(log_filter.filter(make_record(name="django.request")))
         self.assertFalse(log_filter.filter(make_record(name="uvicorn.error")))
@@ -50,7 +50,7 @@ class DatabaseLogTest(TransactionTestCase):
         """Хендлер пишет одну строку: модуль, уровень, сообщение с подставленными аргументами, без трейсбека."""
         DatabaseLogHandler().emit(make_record())
         row = StatusLog.objects.get()
-        self.assertEqual((row.logger_name, row.level, row.msg, row.trace), ("form.services", logging.WARNING, "Письмо по заявке 7 не ушло", None))
+        self.assertEqual((row.logger_name, row.level, row.msg, row.trace), ("core.mailer", logging.WARNING, "Письмо по заявке 7 не ушло", None))
 
     def test_queue_to_database(self):
         """Как на сервере: запись в очередь, в базу её пишет поток слушателя — с трейсбеком, без чужого шума."""
@@ -61,7 +61,7 @@ class DatabaseLogTest(TransactionTestCase):
             handler.handle(make_record(level=logging.ERROR, exc_info=error_info()))
             handler.handle(make_record(name="django.request"))
         row = StatusLog.objects.get()
-        self.assertEqual((row.logger_name, row.level), ("form.services", logging.ERROR))
+        self.assertEqual((row.logger_name, row.level), ("core.mailer", logging.ERROR))
         self.assertIn("ValueError: мусор от сервиса", row.trace)
 
 
