@@ -1,5 +1,5 @@
 # Полезные команды
-Шпаргалка · 14.10.2026
+Шпаргалка · 21.10.2026
 
 Команды по темам. Подробности про деплой — в [deploy.md](deploy.md), про устройство
 проекта — в [architecture.md](architecture.md).
@@ -13,7 +13,14 @@
 ```bash
 . .venv/bin/activate                # в каждом новом окне терминала
 deactivate                          # выйти из окружения
+
+cd app                              # команды manage.py — отсюда
+python manage.py runserver          # админка и API на 127.0.0.1:8000
+python manage.py runserver 8001     # другой порт
 ```
+
+Админка — http://127.0.0.1:8000/admin/, Swagger — http://127.0.0.1:8000/api/docs. `runserver` здесь
+свой: стандартный поднял бы только админку, без API ([почему](../readme.md#структура)).
 
 Имя папки `.venv` менять нельзя: именно оно указано в `.gitignore`. Если в системе
 несколько версий Python, окружение создаётся нужной явно: `python3.14 -m venv .venv`.
@@ -53,7 +60,16 @@ python manage.py dbshell                     # то же самое, с наст
 pg_dump -Fc project > project.dump           # дамп
 pg_restore -d project -c project.dump        # восстановить (-c сначала удалит объекты)
 
-python manage.py shell                       # консоль Django с моделями
+python manage.py shell                       # консоль Django, модели уже импортированы
+python manage.py shell -c "print(Page.objects.count())"   # разовая команда без консоли
+```
+
+Сервис API из консоли — тем же вызовом `.sync()`, что и из админки
+([как устроено](../app/core/readme.md#асинхронный-сервис-из-админки)):
+
+```python
+from form import services
+services.resend_request_email.sync(form_request_id)
 ```
 
 ### Расширения Postgres — только миграцией
@@ -81,6 +97,16 @@ class Migration(migrations.Migration):
 pgvector) так не поставить — их ставит администратор сервера, и они нужны ещё и в CI и локально:
 договоритесь с ним заранее. Поиск похожих строк в запросах Django (`__trigram_similar`) — ещё
 и `django.contrib.postgres` в `INSTALLED_APPS`.
+
+## Пользователи админки
+
+```bash
+python manage.py createsuperuser                      # новый суперпользователь
+python manage.py changepassword admin@example.com     # сменить пароль, вход — по email
+```
+
+На сервере — те же команды через `docker compose run --rm cron python manage.py ...`
+в папке проекта ([деплой](deploy.md)).
 
 ## Скопировать боевую базу в локальную
 
@@ -177,11 +203,17 @@ python manage.py check --deploy              # настройки безопас
 python manage.py sync_async_models --check   # модели для API не отстали
 python manage.py test --keepdb               # тесты: база test_<база>, Redis не нужен
 python manage.py test form --keepdb          # тесты одного модуля
+python manage.py test form.tests.test_admin --keepdb   # один файл; через точку дальше — класс, тест
+python manage.py test -k filter --keepdb     # тесты, в имени которых есть «filter»
+python manage.py test --failfast --keepdb    # остановиться на первом упавшем
+python manage.py test --parallel auto --keepdb   # в несколько процессов, по числу ядер
 ```
 
 Тестам нужен PostgreSQL, где можно создать базу (`test_` + имя из `.env`). `--keepdb` оставляет
 её между прогонами — второй запуск быстрее. Без него Django спросит, удалить ли старую;
-`--noinput` — удалить молча.
+`--noinput` — удалить молча. `--parallel` заводит по копии тестовой базы на процесс
+(`test_<база>_1`, `_2`…). Запустить только упавшие в прошлый раз, как `pytest --lf`, Django не умеет:
+имя упавшего теста — в выводе, его и передать.
 
 ## Шпаргалка
 
