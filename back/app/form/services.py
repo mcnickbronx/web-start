@@ -8,21 +8,19 @@
 и письмо по ней не уходит. Бот не узнаёт, что его поймали, а ложное срабатывание видно
 в админке.
 """
-import asyncio
 import logging
 import uuid
 from datetime import timedelta
-from pathlib import Path
 
 from django.core import signing
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
 from django.core.validators import validate_email
 from django.utils import timezone
 from fastapi import HTTPException
 from tortoise.exceptions import IntegrityError
 from tortoise.transactions import in_transaction
 
+from core import upload
 from core.bridge import with_sync
 from core.errors import field_error
 from form import captcha, conf, models, models_async
@@ -96,19 +94,10 @@ async def upload_file(token: str, file_name: str, content: bytes) -> models_asyn
     if not form_type.is_file:
         raise HTTPException(406, "К этой форме нельзя прикладывать файлы")
 
-    extension = Path(file_name).suffix.lstrip(".").lower()
-    if extension not in conf.FILE_EXTENSION_LIST:
-        raise HTTPException(406, f"Допустимые форматы: {', '.join(conf.FILE_EXTENSION_LIST)}")
-    if not content:
-        raise HTTPException(406, "Файл пустой")
-    if len(content) > conf.FILE_SIZE_MAX_MB * 1024 * 1024:
-        raise HTTPException(406, f"Файл больше {conf.FILE_SIZE_MAX_MB} МБ")
+    extension = upload.check_upload(file_name, content, conf.FILE_EXTENSION_LIST, conf.FILE_SIZE_MAX_MB)
     if await models_async.FormFile.filter(token_id=payload["id"]).count() >= form_type.file_count_max:
         raise HTTPException(406, f"Можно приложить не больше {form_type.file_count_max} файлов")
-
-    # Имя на диске случайное: исходное хранится отдельно, по нему файл и скачивают
-    name = f"{timezone.now():%Y/%m}/{uuid.uuid4().hex}.{extension}"
-    name = await asyncio.to_thread(models.form_file_storage().save, name, ContentFile(content))
+    name = await upload.save_upload(models.form_file_storage(), extension, content)
     return await models_async.FormFile.create(token_id=payload["id"], file=name, original_name=file_name[:255], size=len(content))
 
 
@@ -248,15 +237,10 @@ async def resend_request_email(form_request_id: int) -> None:
 
 # --- Уборка (админка и команды) ---------------------------------------------------------------
 
-def delete_files(file_list) -> None:
-    """Удаляет файлы с диска — Django при удалении записей этого не делает. Нет файла — не ошибка."""
-    for form_file in file_list:
-        form_file.file.delete(save=False)
+#: Файлы с диска при удалении заявок в админке: Django удаляет записи, а файлы оставляет
+delete_files = upload.delete_files
 
 
 def clear_orphan_files(hours: int = conf.FILE_ORPHAN_HOURS) -> int:
     """Файлы, которые загрузили, но так и не приложили к заявке. Возвращает число удалённых."""
-    file_list = list(models.FormFile.objects.filter(form_request__isnull=True, date_add__lt=timezone.now() - timedelta(hours=hours)))
-    delete_files(file_list)
-    models.FormFile.objects.filter(id__in=[form_file.id for form_file in file_list]).delete()
-    return len(file_list)
+    return upload.clear_orphans(models.FormFile.objects.filter(form_request__isnull=True, date_add__lt=timezone.now() - timedelta(hours=hours)))

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, File, Form, Request, UploadFile
 
+from core import upload
 from core.schemas import MessageOut
 from form import conf, services
 from form.schemas import FormDetailOut, FormFileOut, FormRequestIn
@@ -25,8 +26,7 @@ async def form_detail(code: str):
                          "удаляет команда уборки. 406 — форма не принимает файлы, неверный формат, "
                          "размер или количество.")
 async def upload_file(token: str = Form(..., description="Токен формы"), file: UploadFile = File(..., description="Файл")):
-    # Читаем на байт больше предела: так узнаём, что файл больше, не загружая его целиком
-    content = await file.read(conf.FILE_SIZE_MAX_MB * 1024 * 1024 + 1)
+    content = await upload.read_upload(file, conf.FILE_SIZE_MAX_MB)
     form_file = await services.upload_file(token, file.filename or "", content)
     return {"file_id": form_file.id}
 
