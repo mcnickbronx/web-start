@@ -1,6 +1,16 @@
 """manage.py runserver — админка Django и API на одном порту (через project/asgi.py).
 
-Перекрывает стандартный runserver: у него нет FastAPI. Только для локальной разработки.
+Подменяет стандартный runserver Django: имя то же, поведение другое. Стандартный поднял бы
+только админку — про FastAPI он не знает. Из его флагов здесь есть только адрес:порт и --noreload.
+Подмена держится на порядке INSTALLED_APPS: Django берёт команду из первого приложения, где она есть,
+поэтому core стоит первым. Опустите core ниже django.contrib.staticfiles — молча вернётся стандартный.
+
+Только для локальной разработки.
+
+Запуск из back/app:
+    python manage.py runserver                       # 127.0.0.1:8000
+    python manage.py runserver 8001                  # другой порт
+    python manage.py runserver 0.0.0.0:8000 --noreload
 """
 import uvicorn
 from django.conf import settings
