@@ -60,7 +60,7 @@ async def token_pair(data: TokenPairIn, request: Request, response: Response):
 
 
 @router.post("/refresh", response_model=TokenOut, summary="Новый access-токен", responses=UNAUTHORIZED,
-             description="По refresh из куки, тело не нужно. Продлевает и саму куку на 30 дней. "
+             description="По refresh из куки, тело не нужно. Продлевает и саму куку на полный срок refresh. "
                          "Из браузера — с `credentials: 'include'`.")
 async def token_refresh(response: Response, refresh: str | None = Cookie(None, alias=auth.REFRESH_COOKIE, include_in_schema=False)):
     session = await get_session_by_token(refresh, "refresh") if refresh else None

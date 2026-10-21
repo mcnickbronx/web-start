@@ -40,7 +40,7 @@ class AuthTest(ApiTestCase):
             self.assertIn(part, cookie)
         response = self.api.post("/api/user/refresh")  # по куке, без тела
         self.assertIn("access", response.json())
-        self.assertIn("refresh=", response.headers["set-cookie"])  # кука продлена ещё на 30 дней
+        self.assertIn("refresh=", response.headers["set-cookie"])  # кука продлена на полный срок refresh
 
         # access вместо refresh не годится: он живёт сутки, refresh — месяц
         self.api.cookies.set("refresh", response.json()["access"])

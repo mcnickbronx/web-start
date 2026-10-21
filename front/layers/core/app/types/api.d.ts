@@ -95,7 +95,7 @@ export interface paths {
         put?: never;
         /**
          * Новый access-токен
-         * @description По refresh из куки, тело не нужно. Продлевает и саму куку на 30 дней. Из браузера — с `credentials: 'include'`.
+         * @description По refresh из куки, тело не нужно. Продлевает и саму куку на полный срок refresh. Из браузера — с `credentials: 'include'`.
          */
         post: operations["token_refresh_api_user_refresh_post"];
         delete?: never;
@@ -1121,7 +1121,7 @@ export interface components {
         TokenOut: {
             /**
              * Access
-             * @description Access-токен (1 день) — в заголовок Authorization: Bearer. Refresh (30 дней) бэкенд кладёт в куку httpOnly, для /refresh
+             * @description Access-токен (по умолчанию живёт сутки) — в заголовок Authorization: Bearer. Refresh (по умолчанию 30 дней) бэкенд кладёт в куку httpOnly, для /refresh
              */
             access: string;
         };

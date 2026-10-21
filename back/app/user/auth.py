@@ -64,7 +64,7 @@ async def login(request: Request, response: Response, user_id: int) -> dict[str,
 
 
 async def renew(response: Response, session: UserSession) -> dict[str, str]:
-    """Продлить вход по refresh: новый access и новая кука на 30 дней — кто заходит, не вылетит через месяц."""
+    """Продлить вход по refresh: новый access и новая кука на полный срок — кто заходит, не вылетит."""
     await session.save(update_fields=["date_used"])  # auto_now: время последней активности
     set_refresh_cookie(response, session)
     return {"access": create_token(session.user_id, session.id, "access")}
@@ -77,7 +77,7 @@ def delete_refresh_cookie(response: Response) -> None:
 async def get_session_by_token(token: str, token_type: TokenType) -> UserSession | None:
     """Живая сессия активного пользователя по токену нужного типа (user уже загружен), иначе None.
 
-    None, если токен подделан или истёк, другого типа (refresh живёт 30 дней и не должен
+    None, если токен подделан или истёк, другого типа (refresh живёт дольше и не должен
     работать как access), сессию удалили (выход), пользователь удалён или неактивен, либо
     токен выпущен до смены пароля. Запрос к базе один — как раньше за одним пользователем.
     """

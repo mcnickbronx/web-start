@@ -26,8 +26,8 @@ class TokenPairIn(BaseModel):
 
 
 class TokenOut(BaseModel):
-    access: str = Field(..., description="Access-токен (1 день) — в заголовок Authorization: Bearer. "
-                                         "Refresh (30 дней) бэкенд кладёт в куку httpOnly, для /refresh")
+    access: str = Field(..., description="Access-токен (по умолчанию живёт сутки) — в заголовок Authorization: Bearer. "
+                                         "Refresh (по умолчанию 30 дней) бэкенд кладёт в куку httpOnly, для /refresh")
 
 
 class UserMeOut(BaseModel):
