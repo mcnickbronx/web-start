@@ -12,6 +12,9 @@ export default defineNuxtConfig({
       apiBase: 'http://localhost:8000',
       // Номер счётчика Яндекс Метрики: NUXT_PUBLIC_METRIKA_ID. Пусто — счётчика нет
       metrikaId: '',
+      // Адрес сайта для canonical, Open Graph и sitemap.xml. Переопределяется в .env: NUXT_PUBLIC_SITE_URL.
+      // Пусто — берётся из запроса (годится для разработки: за прокси протокол может оказаться http)
+      siteUrl: '',
     },
   },
 })

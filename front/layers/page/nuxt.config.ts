@@ -8,9 +8,6 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      // Адрес сайта для canonical, Open Graph и sitemap.xml. Переопределяется в .env: NUXT_PUBLIC_SITE_URL.
-      // Пусто — берётся из запроса (годится для разработки: за прокси протокол может оказаться http)
-      siteUrl: '',
       // Открыт ли сайт для поиска: NUXT_PUBLIC_SITE_INDEXED=true. По умолчанию закрыт — robots.txt
       // запрещает всё, на ответах noindex: открыть сайт — осознанный шаг при запуске, а забытый
       // открытым dev-сайт даёт дубли в поиске. Меняется в .env, пересборка не нужна
