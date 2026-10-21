@@ -118,7 +118,7 @@ app/<module>/
 |---|---|---|
 | Админка | Django | sqladmin (0.32, 09.2026): нет inline, загрузки файлов, групп и прав |
 | Вид админки | стандартный Django | тема Unfold — по желанию проекта: [docs/unfold.md](docs/unfold.md) |
-| Фильтры списков в админке | свой пакет [django-admin-filter-kit](https://github.com/mcnickbronx/django-admin-filter-kit) | фильтр с подсказками на встроенном автокомплите Django и сворачиваемая панель; `django-admin-autocomplete-filter` заброшен с 2021 и в Django 6 падал |
+| Фильтры списков в админке | свой пакет [django-admin-filter-kit](https://github.com/mcnickbronx/django-admin-filter-kit) | фильтр с подсказками на встроенном автокомплите Django, сворачиваемая панель и курсор в поиске подсказок; `django-admin-autocomplete-filter` заброшен с 2021 и в Django 6 падал |
 | Выгрузка списков в Excel | `openpyxl`, xlsx | у ячейки свой тип: текст посетителя не станет формулой, `+7…` — числом; в CSV то и другое угадывает Excel |
 | Миграции | Django, по модулям | источник схемы один |
 | API | FastAPI на уровне ASGI, до Django | middleware Django в API не участвуют |

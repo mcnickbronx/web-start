@@ -23,7 +23,8 @@
 4. **Фильтр «Форма» в заявках** — вместо `AutocompleteFilter` движка фильтр Unfold:
    `unfold.contrib.filters.admin.AutocompleteSelectFilter` и `list_filter_submit = True`
    (`app/form/admin.py` в v2.1.1). Пакет `django-admin-filter-kit` тогда не нужен — убрать из
-   `requirements.txt` и `INSTALLED_APPS`: с Unfold он не проверялся. Порядок рубрик перетаскиванием —
+   `requirements.txt` и `INSTALLED_APPS`: с Unfold он не проверялся. С ним уходит и курсор в поиске
+   подсказок у полей со связью — проверить, теряется ли в Unfold первая набранная буква. Порядок рубрик перетаскиванием —
    `ordering_field` в `app/page/admin.py`.
 5. **Перевод.** В Unfold 0.108 русского нет: свой — `app/locale/ru/` из v2.1.1 и
    `LOCALE_PATHS = [BASE_DIR / "locale"]`. Новая строка на английском — дописать в `.po`
