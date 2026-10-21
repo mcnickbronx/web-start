@@ -1,4 +1,0 @@
-{% extends "admin/base_site.html" %}
-{% load static %}
-{# Общее для админки всех модулей: курсор в поиске подсказок у полей со связью (core/static/core/admin.js) #}
-{% block extrahead %}{{ block.super }}<script src="{% static "core/admin.js" %}" defer></script>{% endblock %}

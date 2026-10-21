@@ -19,9 +19,11 @@
 - Админка: выгрузка списка в Excel — действие «Выгрузить в Excel» (`core.xlsx.export_xlsx`), колонки как в списке;
   первые — заявки. Новая зависимость `openpyxl` — она уже в образе бэкенда; локально — `pip install -r requirements.txt`.
   Миграций нет, сайту ничего делать не нужно. Проекту на движке — `export_xlsx` в `actions` своей админки.
-- Админка: фильтр «Форма» в заявках и сворачиваемая панель фильтров — из пакета
-  [`django-admin-filter-kit`](https://pypi.org/project/django-admin-filter-kit/) вместо
-  `django-admin-autocomplete-filter` и своего кода в `core`. Для того, кто работает в админке, всё
+- Админка: фильтр «Форма» в заявках, сворачиваемая панель фильтров и курсор в поиске подсказок
+  на странице записи — из пакета
+  [`django-admin-filter-kit`](https://pypi.org/project/django-admin-filter-kit/) 0.3.0 вместо
+  `django-admin-autocomplete-filter` и своего кода в `core` (`core/static/core/admin.js` и
+  `core/templates/admin/base_site.html` удалены). Для того, кто работает в админке, всё
   как было; свёрнута ли панель, браузер запомнит заново. Миграций нет, сайту ничего делать не нужно.
 - Проекту на движке со своими фильтрами из `core.admin_filters` (файла больше нет) — фильтр
   `admin_filter_kit.filters.AutocompleteFilter`: `list_filter = [("поле", AutocompleteFilter)]`,

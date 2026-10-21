@@ -49,8 +49,8 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 INSTALLED_APPS = [
     # core — первым: его runserver перекрывает стандартный из staticfiles
     "core",
-    # Фильтр списка с подсказками по связи и сворачиваемая панель фильтров. Выше django.contrib.admin:
-    # его шаблон списка дополняет стандартный
+    # Фильтр списка с подсказками по связи, сворачиваемая панель фильтров и курсор в поиске подсказок.
+    # Выше django.contrib.admin: его шаблоны списка и записи дополняют стандартные
     "admin_filter_kit",
     "django.contrib.admin",
     "django.contrib.auth",
