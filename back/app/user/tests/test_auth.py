@@ -1,10 +1,12 @@
 import asyncio
+from datetime import timedelta
 from unittest import mock
 
 from django.core import mail
+from django.utils import timezone
 
 from core.tests.api import ApiTestCase
-from user import models, models_async
+from user import conf, models, models_async
 from user.services import issue_code
 from user.tests.create import PASSWORD, auth_header, create_user
 
@@ -45,6 +47,16 @@ class AuthTest(ApiTestCase):
         # access вместо refresh не годится: он живёт сутки, refresh — месяц
         self.api.cookies.set("refresh", response.json()["access"])
         self.assertEqual(self.api.post("/api/user/refresh").status_code, 401)
+
+    def test_refresh_lifetime(self):
+        # Срок refresh задаёт и куку, и уборку: сессию, где не заходили дольше срока, удаляет следующий вход
+        create_user()
+        self.login()
+        models.UserSession.objects.update(date_used=timezone.now() - timedelta(days=8))
+        with mock.patch.object(conf, "JWT_REFRESH_LIFETIME", timedelta(days=7)):
+            response = self.login()
+        self.assertIn("Max-Age=604800", response.headers["set-cookie"])
+        self.assertEqual(models.UserSession.objects.count(), 1)
 
     def test_logout_revokes_tokens_at_once(self):
         create_user()
