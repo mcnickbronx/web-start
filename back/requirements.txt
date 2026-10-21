@@ -22,7 +22,7 @@ taskiq-redis==1.2.3
 # Модуль page: Markdown → HTML, очистка HTML, ужатие картинок
 markdown-it-py[linkify]==4.2.0
 nh3==0.3.7
-Pillow==12.3.0
+Pillow==13.0.0
 
 # Модуль form: загрузка файлов в API, проверка Яндекс SmartCaptcha
 python-multipart==0.0.32
