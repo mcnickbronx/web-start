@@ -1,4 +1,8 @@
-<!-- Заготовка readme нового модуля (startapp --template=core/module_template): заполнить, эту строку удалить -->
+> **Заготовка нового модуля.** Папка `app/core/module_template/` — шаблон: команда из `back/app`
+> `python manage.py startapp <module> --template=core/module_template` копирует её в `app/<module>/`
+> со всеми файлами модуля (`*.py-tpl` станут `*.py`). Шаги — `back/readme.md`, раздел «Модуль».
+> Этот файл станет readme нового модуля: заполните разделы ниже, а эту врезку удалите.
+
 # Модуль «…»
 Как устроен модуль · дата
 
