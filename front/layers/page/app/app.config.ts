@@ -1,7 +1,9 @@
 // Настройки ленты. Сайт меняет их в своём app/app.config.ts, не перекрывая страницы движка
 export default defineAppConfig({
   page: {
+    /** Заголовок ленты и <title> страницы /blog */
     blogTitle: 'Блог',
+    /** Подзаголовок ленты и meta description страницы /blog */
     blogDescription: 'Новости и статьи',
     /** Статей на странице ленты */
     feedRow: 12,

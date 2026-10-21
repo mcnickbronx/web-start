@@ -41,6 +41,8 @@ services:
     command: &app-command >
       uvicorn project.asgi:application --host 0.0.0.0 --port 8000
       --workers ${API_WORKERS:-1} --proxy-headers --forwarded-allow-ips=*
+    # Этот блок заменяет весь environment из x-app (слияние << неглубокое), поэтому
+    # DJANGO_SETTINGS_MODULE и HOME повторены — не удалять
     environment:
       DJANGO_SETTINGS_MODULE: project.settings
       HOME: /tmp
@@ -134,6 +136,7 @@ services:
       - redis_data:/data
     deploy: { resources: { limits: { memory: 320m } } }
 
+  # Профиль full: выполняет задачи из Redis; процессов — TASK_WORKERS в .env
   worker:
     <<: *app
     profiles: [full]
@@ -143,7 +146,9 @@ services:
 
   # Перед запуском новой версии (автовыкладка): модели для API не отстали, миграции, статика.
   # Упало — новая версия не запускается, работает прежняя. Миграции должны быть совместимы
-  # с прежним кодом: несколько секунд он работает с новой схемой
+  # с прежним кодом: несколько секунд он работает с новой схемой.
+  # Одноразовый: его запускает выкладка (docker compose run --rm deploy), а up не поднимает — профиль deploy.
+  # Ключ deploy: внутри — лимиты compose, не этот сервис
   deploy:
     <<: *app
     profiles: [deploy]

@@ -51,7 +51,7 @@
 | база бэкенда сайта | контент: страницы, статьи, формы, заявки |
 
 - **Фронт сайта** подключает движок одной строкой в `nuxt.config.ts`:
-  `extends: [['gh:mcnickbronx/web-start/front#v1.0.0', { install: true }]]`.
+  `extends: [['gh:mcnickbronx/web-start/front#v2.3.0', { install: true }]]`.
   Подробно — [front/readme.md](front/readme.md#сайт-на-движке).
 - **Бэкенд сайта** — образ того же коммита: `DEPLOY_IMAGE=…/web-start-back:<хеш>` в `.env` сервера.
   Сменили хеш — сервер выложит новую версию сам. Подробно — [back/docs/deploy.md](back/docs/deploy.md#выкладка).

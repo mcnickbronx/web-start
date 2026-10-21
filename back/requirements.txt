@@ -1,16 +1,20 @@
+# Django: модели, миграции, админка; настройки из .env
 django==6.1.2
 django-environ==0.14.0
 # Админка: фильтр списка с подсказками по связи (заявки → «Форма»), сворачиваемая панель фильтров
 django-admin-filter-kit==0.2.0
 # Админка: выгрузка списка в Excel (core/xlsx.py)
 openpyxl==3.1.5
+# Postgres для Django (API ходит в базу через asyncpg — ниже, у tortoise-orm)
 psycopg[binary]==3.3.5
 
+# API: FastAPI, Tortoise, JWT
 fastapi==0.141.1
 uvicorn[standard]==0.53.0
 tortoise-orm[asyncpg]==1.1.8
 pyjwt==2.15.1
 
+# Фоновые задачи. Сервер Redis — только в профиле full, пакет taskiq-redis нужен всегда (core/broker.py)
 taskiq==0.12.6
 taskiq-redis==1.2.3
 

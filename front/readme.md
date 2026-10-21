@@ -73,7 +73,7 @@ npm run dev                    # http://localhost:3000
 ```ts
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-01',
-  extends: [['gh:mcnickbronx/web-start/front#v1.0.0', { install: true }]],
+  extends: [['gh:mcnickbronx/web-start/front#v2.3.0', { install: true }]],
 })
 ```
 

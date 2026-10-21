@@ -53,7 +53,9 @@ jobs:
         working-directory: back/app
         run: |
           python manage.py check
+          # модели Tortoise для API (models_async.py) не отстали от models.py
           python manage.py sync_async_models --check
+          # миграция не забыта: models.py поменяли, а makemigrations не запустили
           python manage.py makemigrations --check --dry-run
           python manage.py test --noinput
 
