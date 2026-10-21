@@ -15,7 +15,7 @@ export interface paths {
         put?: never;
         /**
          * Регистрация
-         * @description Создаёт неактивного пользователя и отправляет код подтверждения на почту. Дальше — /activate. Код живёт 30 минут.
+         * @description Создаёт неактивного пользователя и отправляет код подтверждения на почту. Дальше — /activate. Код по умолчанию живёт 30 минут.
          */
         post: operations["register_api_user_register_post"];
         delete?: never;
@@ -55,7 +55,7 @@ export interface paths {
         put?: never;
         /**
          * Выслать код ещё раз
-         * @description Новый код подтверждения на почту. Не чаще раза в минуту: раньше — 406 с временем ожидания. Такого email нет или он уже активирован — ответ как при отправке, письма нет.
+         * @description Новый код подтверждения на почту. По умолчанию не чаще раза в минуту: раньше — 406 с временем ожидания. Такого email нет или он уже активирован — ответ как при отправке, письма нет.
          */
         post: operations["activate_resend_api_user_activate_resend_post"];
         delete?: never;
@@ -233,7 +233,7 @@ export interface paths {
         put?: never;
         /**
          * Забыли пароль
-         * @description Отправляет код на почту, дальше — /password/reset/confirm. Не чаще раза в минуту: раньше — 406 с временем ожидания. Такого аккаунта нет — ответ как при отправке, письма нет.
+         * @description Отправляет код на почту, дальше — /password/reset/confirm. По умолчанию не чаще раза в минуту: раньше — 406 с временем ожидания. Такого аккаунта нет — ответ как при отправке, письма нет.
          */
         post: operations["password_reset_api_user_password_reset_post"];
         delete?: never;
@@ -594,7 +594,7 @@ export interface components {
             fill_seconds_min: number;
             /**
              * Token
-             * @description Токен формы: для загрузки файлов и отправки. Одноразовый, живёт 2 часа
+             * @description Токен формы: для загрузки файлов и отправки. Одноразовый, по умолчанию живёт 2 часа
              */
             token: string;
         };

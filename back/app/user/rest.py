@@ -26,7 +26,7 @@ BUSINESS = {406: {"model": MessageOut, "description": "Сообщение пол
 
 @router.post("/register", response_model=MessageOut, summary="Регистрация",
              description="Создаёт неактивного пользователя и отправляет код подтверждения на почту. "
-                         "Дальше — /activate. Код живёт 30 минут.")
+                         "Дальше — /activate. Код по умолчанию живёт 30 минут.")
 async def register(data: RegisterIn):
     await services.register(data.email, data.password, data.first_name, data.last_name)
     return {"message": "Код подтверждения отправлен на почту"}
@@ -41,7 +41,7 @@ async def activate(data: CodeIn, request: Request, response: Response):
 
 
 @router.post("/activate/resend", response_model=MessageOut, summary="Выслать код ещё раз", responses=BUSINESS,
-             description="Новый код подтверждения на почту. Не чаще раза в минуту: раньше — 406 с временем ожидания. "
+             description="Новый код подтверждения на почту. По умолчанию не чаще раза в минуту: раньше — 406 с временем ожидания. "
                          "Такого email нет или он уже активирован — ответ как при отправке, письма нет.")
 async def activate_resend(data: EmailIn):
     await services.resend_activation_code(data.email)
@@ -118,7 +118,7 @@ async def password_change(data: PasswordChangeIn, user: CurrentUser, request: Re
 
 
 @router.post("/password/reset", response_model=MessageOut, summary="Забыли пароль", responses=BUSINESS,
-             description="Отправляет код на почту, дальше — /password/reset/confirm. Не чаще раза в минуту: "
+             description="Отправляет код на почту, дальше — /password/reset/confirm. По умолчанию не чаще раза в минуту: "
                          "раньше — 406 с временем ожидания. Такого аккаунта нет — ответ как при отправке, письма нет.")
 async def password_reset(data: EmailIn):
     await services.request_password_reset(data.email)

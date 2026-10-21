@@ -37,7 +37,7 @@ class FormDetailOut(BaseModel):
     file_size_max_mb: int = Field(..., description="Предел размера файла, МБ")
     fill_seconds_min: int = Field(..., description="Не отправлять раньше, чем через столько секунд после получения формы: "
                                                    "быстрее — ловушка для ботов, заявка уйдёт в спам. 0 — ловушка выключена")
-    token: str = Field(..., description="Токен формы: для загрузки файлов и отправки. Одноразовый, живёт 2 часа")
+    token: str = Field(..., description="Токен формы: для загрузки файлов и отправки. Одноразовый, по умолчанию живёт 2 часа")
 
 
 class FormFileOut(BaseModel):
