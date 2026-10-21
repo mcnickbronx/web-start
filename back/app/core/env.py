@@ -50,8 +50,8 @@ def env_int(name: str, default: int, min_value: int = 1, max_value: int | None =
 
 
 def env_list(name: str, default: list[str]) -> list[str]:
-    """Список через запятую из .env, строчными, без точки в начале (форматы пишут и как «.pdf»); нет строки — default."""
-    value = [item.strip().lower().lstrip(".") for item in env.list(name, default=default) if item.strip(" .")]
+    """Список через запятую из .env, строчными; нет строки — default."""
+    value = [item.strip().lower() for item in env.list(name, default=default) if item.strip()]
     if not value:
         raise ImproperlyConfigured(f"{name}: пустой список")
     return _remember(name, value, default)

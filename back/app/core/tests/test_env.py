@@ -1,6 +1,7 @@
 """Настройки модулей из .env: нет строки — значение по умолчанию, своё — из .env, неверное — ошибка запуска."""
 import io
 import os
+import re
 from unittest import mock
 
 from django.conf import settings
@@ -30,9 +31,9 @@ class EnvTest(SimpleTestCase):
 
     def test_list(self):
         self.assertEqual(env_list("CORE_TEST_MISSING", ["jpg"]), ["jpg"])
-        with mock.patch.dict(os.environ, {"CORE_TEST_LIST": ".PDF, zip,"}):
-            self.assertEqual(env_list("CORE_TEST_LIST", ["jpg"]), ["pdf", "zip"])
-        with mock.patch.dict(os.environ, {"CORE_TEST_LIST": " , . "}), self.assertRaises(ImproperlyConfigured):
+        with mock.patch.dict(os.environ, {"CORE_TEST_LIST": "PDF, .example.com,"}):
+            self.assertEqual(env_list("CORE_TEST_LIST", ["jpg"]), ["pdf", ".example.com"])
+        with mock.patch.dict(os.environ, {"CORE_TEST_LIST": " , "}), self.assertRaises(ImproperlyConfigured):
             env_list("CORE_TEST_LIST", ["jpg"])
 
     def test_str(self):
@@ -43,10 +44,11 @@ class EnvTest(SimpleTestCase):
 
 class EnvSettingsTest(SimpleTestCase):
     def test_template_lists_every_setting(self):
-        # .env.txt — список настроек для администратора: новая настройка без строки в нём — ошибка
+        # .env.txt — список настроек для администратора: новая настройка без строки «# ИМЯ=» в нём — ошибка
         template = (settings.BASE_DIR.parent / ".env.txt").read_text(encoding="utf-8")
         self.assertTrue(core_env.SETTING_LIST)
-        self.assertEqual([item.name for item in core_env.SETTING_LIST if item.name not in template], [])
+        missing = [item.name for item in core_env.SETTING_LIST if not re.search(rf"^#? ?{item.name}=", template, re.M)]
+        self.assertEqual(missing, [])
 
     def test_command_hides_keys(self):
         with mock.patch.object(core_env, "SETTING_LIST", [

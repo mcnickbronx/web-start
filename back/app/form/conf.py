@@ -27,8 +27,9 @@ FILL_SECONDS_MIN = env_int("FORM_FILL_SECONDS_MIN", 3, min_value=0, max_value=60
 
 #: Файлы заявок — в закрытой папке, вне media/: media/ открыта всем по прямой ссылке
 FILE_ROOT = settings.BASE_DIR.parent / "private" / "form"
-#: Форматы и размер проверяет бэкенд, ошибка называет их посетителю
-FILE_EXTENSION_LIST = env_list("FORM_FILE_EXTENSION_LIST", ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"])
+#: Форматы и размер проверяет бэкенд, ошибка называет их посетителю. Точку в начале («.pdf») снимаем:
+#: иначе ни один файл не подошёл бы
+FILE_EXTENSION_LIST = [item.lstrip(". ") for item in env_list("FORM_FILE_EXTENSION_LIST", ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"])]
 #: Файл читается в память целиком, а у контейнера лимит памяти (compose.yml) — поэтому не больше 50 МБ
 FILE_SIZE_MAX_MB = env_int("FORM_FILE_SIZE_MAX_MB", 10, max_value=50)
 #: Файлы, так и не приложенные к заявке, старше этого удаляет команда clear_form_files

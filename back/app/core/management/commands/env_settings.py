@@ -3,12 +3,14 @@
 Видно, применилась ли правка .env: после `docker compose restart` в контейнере старый .env,
 нужно пересоздать контейнеры. Ключи не печатаются — только «задан» или «пусто». База не нужна.
 
-На сервере, в папке проекта:
-    docker compose run --rm --no-deps cron python manage.py env_settings
+На сервере, в папке проекта — в работающем приложении (app, в профиле full — app-full):
+    docker compose exec app python manage.py env_settings
+`run` вместо `exec` создаёт новый контейнер с новым .env: покажет, что будет после пересоздания,
+а не то, что действует сейчас.
 """
 from django.core.management.base import BaseCommand
 
-from core.env import SETTING_LIST
+from core import env
 
 
 class Command(BaseCommand):
@@ -16,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         prefix = None
-        for setting in sorted(SETTING_LIST, key=lambda item: item.name):
+        for setting in sorted(env.SETTING_LIST, key=lambda item: item.name):
             if setting.name.split("_")[0] != prefix:
                 prefix = setting.name.split("_")[0]
                 self.stdout.write(f"\n{prefix}")
