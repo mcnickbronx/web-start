@@ -2,11 +2,12 @@ import io
 import tempfile
 from pathlib import Path
 
+from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import FileSystemStorage
 from django.test import SimpleTestCase
 from fastapi import HTTPException, UploadFile
 
-from core.upload import check_upload, read_upload, save_upload
+from core.upload import check_upload, file_response, read_upload, save_upload
 
 MB = 1024 * 1024
 
@@ -42,3 +43,22 @@ class UploadTest(SimpleTestCase):
             for name in name_list:
                 self.assertRegex(name, r"^\d{4}/\d{2}/[0-9a-f]{32}\.pdf$")
                 self.assertEqual((Path(root) / name).read_bytes(), b"%PDF-1.4")
+
+    async def test_file_response(self):
+        """Файл из хранилища — по имени из записи: тип по расширению на диске, а не по имени посетителя; нет имени
+        или файла — 404; имя с выходом за папку хранилища не отдаётся, а падает."""
+        with tempfile.TemporaryDirectory() as root:
+            storage = FileSystemStorage(location=root)
+            name = await save_upload(storage, "pdf", b"%PDF-1.4")
+            response = await file_response(storage, name, "справка.exe")
+            self.assertEqual((response.media_type, response.headers["content-disposition"]),
+                             ("application/pdf", "attachment; filename*=utf-8''%D1%81%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D0%B0.exe"))
+            # Без имени посетителя — имя на диске
+            self.assertEqual((await file_response(storage, name)).headers["content-disposition"], f'attachment; filename="{Path(name).name}"')
+            # Пустое имя, файла нет, имя папки
+            for missing in ["", "2026/01/нет-такого.pdf", Path(name).parent.as_posix()]:
+                with self.subTest(missing), self.assertRaises(HTTPException) as error:
+                    await file_response(storage, missing)
+                self.assertEqual(error.exception.status_code, 404)
+            with self.assertRaises(SuspiciousFileOperation):
+                await file_response(storage, "../../etc/passwd")

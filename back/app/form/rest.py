@@ -1,10 +1,13 @@
+from uuid import UUID
+
 from fastapi import APIRouter, File, Form, Request, UploadFile
+from fastapi.responses import FileResponse
 
 from core import upload
 from core.schemas import MessageOut
 from form import conf, services
 from form.schemas import FormDetailOut, FormFileOut, FormRequestIn
-from user.auth import OptionalUser
+from user.auth import CurrentUser, OptionalUser
 
 router = APIRouter()
 
@@ -45,3 +48,15 @@ async def create_request(data: FormRequestIn, request: Request, user: OptionalUs
     ip = request.client.host if request.client else ""
     await services.create_request(data, user, ip, request.headers.get("user-agent", ""))
     return {"message": "Заявка отправлена"}
+
+
+@router.get("/file/{file_id}", response_class=FileResponse, summary="Скачать свой файл заявки",
+            responses={200: {"content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}},
+                             "description": "Файл; имя — в Content-Disposition"},
+                       401: {"model": MessageOut, "description": "Нет токена или он недействителен"},
+                       404: {"model": MessageOut, "description": "Нет такого файла, он не ваш или ещё не приложен к заявке"}},
+            description="Файл заявки — только её автору: тому, кто отправил заявку вошедшим. Чужой, ещё не приложенный "
+                        "и несуществующий файл — одинаково 404, по ответу не узнать, есть ли такой файл. "
+                        "Менеджеры скачивают файлы в админке, в заявке.")
+async def download_file(file_id: UUID, user: CurrentUser):
+    return await services.download_file(user, file_id)

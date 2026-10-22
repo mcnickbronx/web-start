@@ -101,6 +101,13 @@ async def upload_file(token: str, file_name: str, content: bytes) -> models_asyn
     return await models_async.FormFile.create(token_id=payload["id"], file=name, original_name=file_name[:255], size=len(content))
 
 
+async def download_file(user: user_models_async.CustomUser, file_id: uuid.UUID):
+    """Файл заявки — только её автору: заявку отправили вошедшим. Чужой, ещё не приложенный и несуществующий
+    файл — одинаковый 404: по ответу не узнать, что файл есть."""
+    form_file = await models_async.FormFile.get(id=file_id, form_request__user_id=user.id)
+    return await upload.file_response(models.form_file_storage(), form_file.file, form_file.original_name)
+
+
 async def _check_file_list(form_type: models_async.FormType, token_id: str, file_id_list: list[uuid.UUID]) -> list[uuid.UUID]:
     """Файлы загружены с этой же формой и ещё ни к чему не приложены."""
     file_id_list = list(set(file_id_list))

@@ -1,4 +1,4 @@
-"""Файл от посетителя: проверка, случайное имя на диске, уборка неприложенных.
+"""Файл от посетителя: проверка, случайное имя на диске, уборка неприложенных, выдача из API.
 
     from core import upload
 
@@ -6,10 +6,14 @@
     extension = upload.check_upload(file_name, content, conf.FILE_EXTENSION_LIST, conf.FILE_SIZE_MAX_MB)  # сервис
     name = await upload.save_upload(models.file_storage(), extension, content)                          # сервис
     upload.clear_orphans(models.MyFile.objects.filter(record__isnull=True, date_add__lt=...))           # уборка
+    return await upload.file_response(models.file_storage(), my_file.file, my_file.original_name)      # выдача
 
 Модель файла, привязка к записи и право на скачивание — в модуле: у каждого свои.
 """
 import asyncio
+import mimetypes
+import os
+import stat
 import uuid
 from pathlib import Path
 
@@ -17,6 +21,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import Storage
 from django.utils import timezone
 from fastapi import HTTPException, UploadFile
+from fastapi.responses import FileResponse
 
 
 async def read_upload(file: UploadFile, size_max_mb: int) -> bytes:
@@ -42,6 +47,26 @@ async def save_upload(storage: Storage, extension: str, content: bytes) -> str:
     и чужой файл не затирает, исходное модуль хранит в записи сам. Возвращает имя для FileField."""
     name = f"{timezone.now():%Y/%m}/{uuid.uuid4().hex}.{extension}"
     return await asyncio.to_thread(storage.save, name, ContentFile(content))
+
+
+async def file_response(storage: Storage, name: str, filename: str = "") -> FileResponse:
+    """Закрытый файл в ответ API — когда модуль уже проверил право. name — имя в хранилище из записи в базе,
+    не из запроса: за папку хранилища storage.path не выпустит. Нет имени или файла на диске — 404, как у записи,
+    которой нет. Файл скачивается, а не открывается в браузере, и не оседает в кэше прокси; filename — имя
+    для посетителя, кириллица и кавычки уходят в Content-Disposition по RFC 5987."""
+    path = storage.path(name) if name else ""
+    try:
+        stat_result = await asyncio.to_thread(os.stat, path)
+    except FileNotFoundError:
+        raise HTTPException(404) from None
+    if not stat.S_ISREG(stat_result.st_mode):
+        raise HTTPException(404)
+    return FileResponse(
+        path, filename=filename or Path(name).name, stat_result=stat_result,
+        # Тип — по расширению на диске: его проверил check_upload, а имя посетителя — нет
+        media_type=mimetypes.guess_type(path)[0] or "application/octet-stream",
+        headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff"},
+    )
 
 
 def delete_files(object_list, field: str = "file") -> None:
