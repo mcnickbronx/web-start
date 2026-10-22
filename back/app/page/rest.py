@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 
 from core.pagination import ListOut, Pagination, paginate, sort_queryset
 from core.schemas import MessageOut
@@ -6,6 +8,7 @@ from page import services
 from page.schemas import (
     PageCategoryOut,
     PageDetailOut,
+    PageListFilter,
     PageListOut,
     PageRedirectOut,
     ResolveOut,
@@ -34,11 +37,10 @@ async def category_info():
                         "По умолчанию сначала новые.")
 async def page_list(
     pagination: Pagination,
-    category_slug: str | None = Query(None, description="Слаг рубрики"),
-    search: str | None = Query(None, max_length=200, description="Поиск по заголовку и анонсу"),
+    filters: Annotated[PageListFilter, Depends(PageListFilter.query)],
     sort: str = Query("-date_published", description="date_published, title, id; «-» — по убыванию"),
 ):
-    queryset = sort_queryset(services.feed_queryset(category_slug, search), sort, ["date_published", "title", "id"])
+    queryset = sort_queryset(filters.apply(services.feed_queryset()), sort, ["date_published", "title", "id"])
     return await paginate(queryset, pagination)
 
 

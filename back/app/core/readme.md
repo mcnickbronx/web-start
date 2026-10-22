@@ -84,6 +84,8 @@ async def product_list(pagination: Pagination, filters: Annotated[ProductFilter,
     return await paginate(queryset, pagination)
 ```
 
+Образец в шаблоне — лента блога: `PageListFilter` в `page/schemas.py`, эндпоинт `page_list` в `page/rest.py`.
+
 Лукап — любой, который понимает Tortoise: без суффикса — точное совпадение, `__icontains`, `__gte`/`__lte`,
 `__in` со списком, через связь — `category__slug`. Список лукапов — запись подходит, если подошёл любой (поиск
 по нескольким полям); разные поля — все сразу. Не заданное поле и пустая строка запрос не меняют: пустое поле

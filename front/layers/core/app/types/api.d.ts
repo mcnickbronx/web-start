@@ -1898,14 +1898,14 @@ export interface operations {
     page_list_api_page_list_get: {
         parameters: {
             query?: {
-                /** @description Слаг рубрики */
-                category_slug?: string | null;
-                /** @description Поиск по заголовку и анонсу */
-                search?: string | null;
                 /** @description date_published, title, id; «-» — по убыванию */
                 sort?: string;
                 page?: number;
                 row?: number;
+                /** @description Слаг рубрики */
+                category_slug?: string | null;
+                /** @description Поиск по заголовку и анонсу */
+                search?: string | null;
             };
             header?: never;
             path?: never;

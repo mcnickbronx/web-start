@@ -201,14 +201,10 @@ def published_page_queryset():
     )
 
 
-def feed_queryset(category_slug: str | None, search: str | None):
-    """Лента блога: только статьи с рубрикой. Отдельные страницы в ленту не попадают."""
-    queryset = published_page_queryset().filter(category_id__isnull=False)
-    if category_slug:
-        queryset = queryset.filter(category__slug=category_slug)
-    if search:
-        queryset = queryset.filter(Q(title__icontains=search) | Q(excerpt__icontains=search))
-    return queryset
+def feed_queryset():
+    """Лента блога: только статьи с рубрикой. Отдельные страницы в ленту не попадают.
+    Рубрику и поиск накладывает эндпоинт — фильтром PageListFilter."""
+    return published_page_queryset().filter(category_id__isnull=False)
 
 
 async def category_list() -> list[models_async.PageCategory]:

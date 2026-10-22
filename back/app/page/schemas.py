@@ -4,6 +4,7 @@ from typing import Literal
 from django.conf import settings
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
+from core.filters import FilterField, FilterSchema
 from core.pagination import Total
 from page.services import build_path
 
@@ -70,6 +71,13 @@ class PageListOut(PageBaseOut):
     """Карточка статьи в ленте блога."""
 
     row_number: int = Field(0, description="Порядковый номер в выборке")
+
+
+class PageListFilter(FilterSchema):
+    """Фильтры ленты блога."""
+
+    category_slug: str | None = FilterField("category__slug", description="Слаг рубрики")
+    search: str | None = FilterField(["title__icontains", "excerpt__icontains"], description="Поиск по заголовку и анонсу", max_length=200)
 
 
 class PageDetailOut(PageBaseOut):

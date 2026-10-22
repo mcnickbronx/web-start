@@ -26,6 +26,27 @@ class PageApiTest(ApiTestCase):
         self.assertEqual(title_list(search="ремонт"), ["Отзыв клиента", "Цены на ремонт"])
         self.assertEqual(title_list(category_slug=category.slug), ["Новый офис"])
 
+    def test_feed_filter_together(self):
+        """Рубрика и поиск вместе — оба сразу, пустые — не фильтруют. page, row и sort рядом с фильтром — не лишние."""
+        create_article("Цены на ремонт")
+        category = create_page_category("Компания")
+        create_article("Ремонт офиса", category=category)
+        create_article("Новый офис", category=category)
+        title_list = lambda **params: [item["title"] for item in self.api.get("/api/page/list", params=params).json()["items"]]  # noqa: E731
+        self.assertEqual(title_list(category_slug=category.slug, search="ремонт"), ["Ремонт офиса"])
+        self.assertEqual(title_list(category_slug="", search=""), ["Новый офис", "Ремонт офиса", "Цены на ремонт"])
+        self.assertEqual(title_list(search="офис", sort="title", page=2, row=1), ["Ремонт офиса"])
+
+    def test_feed_wrong_param(self):
+        """Поиск длиннее 200 символов и неизвестный параметр — 422 у своего параметра: опечатка `?serch=`
+        не отдаёт всю ленту."""
+        for params, field in [({"search": "р" * 201}, "search"), ({"foo": "1"}, "foo")]:
+            with self.subTest(params):
+                response = self.api.get("/api/page/list", params=params)
+                self.assertEqual(response.status_code, 422)
+                self.assertEqual([error["loc"] for error in response.json()["full_error"]], [field])
+        self.assertEqual(self.api.get("/api/page/list", params={"search": "р" * 200}).status_code, 200)
+
     def test_feed_page_too_far(self):
         """Огромный номер страницы — 422, а не 500: смещение не влезло бы в bigint базы."""
         self.assertEqual(self.api.get("/api/page/list", params={"page": 10**20}).status_code, 422)
