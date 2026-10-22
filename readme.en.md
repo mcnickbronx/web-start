@@ -91,7 +91,8 @@ export default defineNuxtConfig({
 The site brings its own layouts, pages and colors and may override engine components (not engine
 pages); the engine brings data loading, SEO, forms and the blog. The site's backend is the Docker image of the same commit, built by
 CI (`.github/workflows/back.yml`). The server setup (`back/compose.yml`) expects Traefik and
-a few shared files — what exactly is in [back/docs/deploy.md](back/docs/deploy.md#что-нужно-от-сервера).
+a few shared files: a server on [infra](https://github.com/mcnickbronx/infra) has all of them, for any other
+server see [back/docs/deploy.md](back/docs/deploy.md#что-нужно-от-сервера).
 
 One version for both parts — the repository tag. Major: a site has to change something by
 hand; minor: new features, safe to update; patch: fixes. Changes — [CHANGELOG.md](CHANGELOG.md).

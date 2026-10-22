@@ -56,7 +56,8 @@
 - **Бэкенд сайта** — образ того же коммита: `DEPLOY_IMAGE=…/web-start-back:<хеш>` в `.env` сервера.
   Сменили хеш — сервер выложит новую версию сам. Подробно — [back/docs/deploy.md](back/docs/deploy.md#выкладка).
 - **Новый сайт** — свой репозиторий из шаблона [web-site-starter](https://github.com/mcnickbronx/web-site-starter)
-  (заготовка для фронтенд-разработчика сайта) и бэкенд на своём сервере: что нужно от сервера — [back/docs/deploy.md](back/docs/deploy.md#что-нужно-от-сервера).
+  (заготовка для фронтенд-разработчика сайта) и бэкенд на своём сервере: готовый сервер —
+  [infra](https://github.com/mcnickbronx/infra), что нужно от другого — [back/docs/deploy.md](back/docs/deploy.md#что-нужно-от-сервера).
 
 ## Версии
 
