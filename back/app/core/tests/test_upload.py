@@ -55,8 +55,8 @@ class UploadTest(SimpleTestCase):
                              ("application/pdf", "attachment; filename*=utf-8''%D1%81%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D0%B0.exe"))
             # Без имени посетителя — имя на диске
             self.assertEqual((await file_response(storage, name)).headers["content-disposition"], f'attachment; filename="{Path(name).name}"')
-            # Пустое имя, файла нет, имя папки
-            for missing in ["", "2026/01/нет-такого.pdf", Path(name).parent.as_posix()]:
+            # Пустое имя, файла нет, имя папки, путь «через» файл
+            for missing in ["", "2026/01/нет-такого.pdf", Path(name).parent.as_posix(), f"{name}/x"]:
                 with self.subTest(missing), self.assertRaises(HTTPException) as error:
                     await file_response(storage, missing)
                 self.assertEqual(error.exception.status_code, 404)

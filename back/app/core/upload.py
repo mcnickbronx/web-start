@@ -57,7 +57,7 @@ async def file_response(storage: Storage, name: str, filename: str = "") -> File
     path = storage.path(name) if name else ""
     try:
         stat_result = await asyncio.to_thread(os.stat, path)
-    except FileNotFoundError:
+    except (FileNotFoundError, NotADirectoryError):  # NotADirectoryError — в записи путь «через» файл: <файл>.pdf/x
         raise HTTPException(404) from None
     if not stat.S_ISREG(stat_result.st_mode):
         raise HTTPException(404)
