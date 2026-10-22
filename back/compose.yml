@@ -70,7 +70,14 @@ services:
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.rule=Host(`${DOMAIN}`) && (Path(`/api/user/pair`) || Path(`/api/user/register`) || PathPrefix(`/api/user/activate`) || PathPrefix(`/api/user/password/reset`) || Path(`/api/form/create`) || Path(`/api/form/upload-file`) || Path(`/admin/login/`))
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.entrypoints=websecure
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.service=${COMPOSE_PROJECT_NAME}-app
-      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.middlewares=login-ratelimit@file
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.middlewares=${COMPOSE_PROJECT_NAME}-cors,login-ratelimit@file
+      # CORS снаружи лимита: ответ 429 приходит с Access-Control-Allow-Origin, иначе браузер его прячет и фронт
+      # пишет «Нет связи» вместо «Слишком много попыток». Предзапросы OPTIONS сюда отвечает Traefik — лимит они не тратят
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-cors.headers.accessControlAllowOriginList=${CORS_ALLOWED_ORIGINS}
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-cors.headers.accessControlAllowCredentials=true
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-cors.headers.accessControlAllowMethods=GET,POST,OPTIONS
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-cors.headers.accessControlAllowHeaders=Content-Type,Authorization
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-cors.headers.accessControlMaxAge=600
       # www.<домен> → <домен>
       - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-www.redirectregex.regex=^https://www\.(.+)
       - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-www.redirectregex.replacement=https://$${1}
