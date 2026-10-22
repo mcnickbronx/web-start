@@ -20,6 +20,7 @@ from asgiref.sync import async_to_sync
 from taskiq import InMemoryBroker
 from tortoise.context import TortoiseContext
 
+from core import http
 from core.broker import broker
 from core.orm import tortoise_config
 
@@ -48,14 +49,15 @@ async def _call[R](func: Callable[..., Awaitable[R]], *args, **kwargs) -> R:
         # в цикле событий API, где Tortoise и очередь задач уже подняты, — берём их
         return await func(*args, **kwargs)
     # Команды manage.py, обычный поток: у вызова свой цикл
-    # событий — поднимаем Tortoise на один вызов. Соединения с базой и Redis привязаны
-    # к циклу, в котором открыты: держать их между вызовами нельзя
+    # событий — поднимаем Tortoise на один вызов. Соединения с базой, Redis и внешними
+    # сервисами привязаны к циклу, в котором открыты: держать их между вызовами нельзя
     async with TortoiseContext() as context:
         await context.init(config=tortoise_config())
         try:
             return await func(*args, **kwargs)
         finally:
             await _release_broker()
+            await http.close()
 
 
 async def _release_broker() -> None:

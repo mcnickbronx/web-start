@@ -16,6 +16,7 @@ from django.utils.module_loading import module_has_submodule  # noqa: E402
 from taskiq import TaskiqEvents, TaskiqState  # noqa: E402
 from tortoise import Tortoise  # noqa: E402
 
+from core import http  # noqa: E402
 from core.broker import broker  # noqa: E402
 from core.orm import tortoise_config  # noqa: E402
 
@@ -32,3 +33,4 @@ async def startup(state: TaskiqState) -> None:
 @broker.on_event(TaskiqEvents.WORKER_SHUTDOWN)
 async def shutdown(state: TaskiqState) -> None:
     await Tortoise.close_connections()
+    await http.close()

@@ -4,6 +4,7 @@
 - 422 валидации → {"message": "...", "full_error": [{"type", "loc", "msg"}]} на русском;
   ошибки полей из сервисов — тем же форматом через field_error()
 - DoesNotExist из Tortoise → 404 {"message": "Не найдено"}
+- ExternalServiceError из core.http → 502 {"message": "Сервис «…» недоступен…"}, в журнал — предупреждение
 - любое другое исключение → 500 {"message": "Внутренняя ошибка сервера"}
 """
 import logging
@@ -15,6 +16,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from tortoise.exceptions import DoesNotExist
 
+from core.http import ExternalServiceError
 from core.translations import HTTP_MESSAGES, VALIDATION_MESSAGES
 
 logger = logging.getLogger(__name__)
@@ -75,6 +77,13 @@ async def does_not_exist_handler(request: Request, exc: DoesNotExist) -> JSONRes
     return JSONResponse(status_code=404, content={"message": HTTP_MESSAGES[404]})
 
 
+async def external_service_handler(request: Request, exc: ExternalServiceError) -> JSONResponse:
+    """Внешний сервис не ответил или ответил ошибкой → 502. Наш код в порядке — в журнал предупреждение
+    одной строкой (что ответил сервис), а не ошибка с трейсом; посетителю — понятный текст."""
+    logger.warning(f"{request.method} {request.url.path} — {exc}")
+    return JSONResponse(status_code=502, content={"message": f"Сервис «{exc.service}» недоступен. Попробуйте позже"})
+
+
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Необработанная ошибка → 500 в нашем формате. В stdout трейсбек пишет uvicorn:
     Starlette после ответа пробрасывает исключение дальше. Свой вызов нужен для журнала
@@ -86,5 +95,6 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 def register_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(DoesNotExist, does_not_exist_handler)
+    app.add_exception_handler(ExternalServiceError, external_service_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)

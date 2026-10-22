@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from taskiq import InMemoryBroker
 from tortoise.contrib.fastapi import RegisterTortoise
 
-from core import bridge
+from core import bridge, http
 from core.broker import broker
 from core.errors import register_error_handlers
 from core.orm import tortoise_config
@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
             if isinstance(broker, InMemoryBroker):
                 await broker.wait_all()
             await broker.shutdown()
+            await http.close()  # после задач: они тоже ходят во внешние сервисы
 
 
 def create_app() -> FastAPI:

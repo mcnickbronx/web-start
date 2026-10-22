@@ -10,9 +10,9 @@ yandex — Яндекс SmartCaptcha: виджет на сайте выдаёт 
 import logging
 import secrets
 
-import aiohttp
 from django.utils.crypto import constant_time_compare, salted_hmac
 
+from core import http
 from form import conf
 
 logger = logging.getLogger(__name__)
@@ -46,11 +46,10 @@ async def check_yandex(captcha_token: str, ip: str) -> bool:
         return False
     data = {"secret": conf.SMARTCAPTCHA_SERVER_KEY, "token": captcha_token, "ip": ip}
     try:
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
-            async with session.post(SMARTCAPTCHA_URL, data=data) as response:
-                if response.status == 200:
-                    return (await response.json(content_type=None)).get("status") == "ok"
-                status, text = response.status, (await response.text())[:500]
+        async with http.session().post(SMARTCAPTCHA_URL, data=data) as response:
+            if response.status == 200:
+                return (await response.json(content_type=None)).get("status") == "ok"
+            status, text = response.status, (await response.text())[:500]
     except Exception:
         logger.warning("SmartCaptcha не ответила, заявка пропущена", exc_info=True)
         return True
