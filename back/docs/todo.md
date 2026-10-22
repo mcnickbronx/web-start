@@ -24,10 +24,6 @@
 в списках. Postgres для тестов без Docker — pip-пакет `pgserver` (бинарники Postgres,
 под Python 3.12).
 
-**До первого магазина или кабинета:**
-
-- **Фильтры списков** — `filters.py` в стиле `FilterSchema` с `q="field__lookup"`.
-
 **Под нагрузкой** — по итогам [замера](benchmark.md):
 
 - **Списки на больших таблицах.** `paginate()` делает точный `count` и `offset`:
