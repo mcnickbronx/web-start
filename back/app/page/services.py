@@ -17,6 +17,7 @@ from django.utils import timezone
 from PIL import Image, ImageOps
 from tortoise.expressions import Q, Subquery
 
+from core import cache
 from core.slug import slugify_text
 from page import conf, models, models_async
 from page.markdown import excerpt_from_html, render_markdown
@@ -25,6 +26,10 @@ from page.markdown import excerpt_from_html, render_markdown
 #: не отдать. Страниц фронта здесь нет — правило проще: адрес совпал со страницей фронта, показывается
 #: страница фронта. Файлов вроде sitemap.xml тоже нет: в слаге не бывает точки
 SLUG_RESERVED_LIST = ["admin", "api", "static", "media", "_nuxt"]
+
+#: Справочник рубрик в кэше (core.cache): его читает меню рубрик на сайте, а меняет только админка —
+#: тогда ключ сбрасывается (page/apps.py)
+CATEGORY_LIST_CACHE_KEY = "page:category_list"
 
 IMAGE_EXTENSION_LIST = ["jpg", "jpeg", "png", "gif", "webp"]
 
@@ -207,9 +212,11 @@ def feed_queryset():
     return published_page_queryset().filter(category_id__isnull=False)
 
 
-async def category_list() -> list[models_async.PageCategory]:
-    """Рубрики, которые показываются на сайте, в порядке из админки."""
-    return await models_async.PageCategory.filter(is_active=True)
+async def category_list() -> list[dict]:
+    """Рубрики, которые показываются на сайте, в порядке из админки. Из кэша — словарями, не объектами ORM."""
+    return await cache.get_or_set(
+        CATEGORY_LIST_CACHE_KEY, lambda: models_async.PageCategory.filter(is_active=True).values("id", "name", "slug"), ttl=600,
+    )
 
 
 async def get_page(slug: str) -> models_async.Page:

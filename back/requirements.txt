@@ -15,9 +15,10 @@ uvicorn[standard]==0.53.0
 tortoise-orm[asyncpg]==1.1.8
 pyjwt==2.15.1
 
-# Фоновые задачи. Сервер Redis — только в профиле full, пакет taskiq-redis нужен всегда (core/broker.py)
+# Фоновые задачи и кэш. Сервер Redis — только в профиле full, пакеты нужны всегда (core/broker.py, core/cache.py)
 taskiq==0.12.6
 taskiq-redis==1.2.3
+redis==8.1.0
 
 # Модуль page: Markdown → HTML, очистка HTML, ужатие картинок
 markdown-it-py[linkify]==4.2.0

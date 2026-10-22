@@ -130,11 +130,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# --- Очередь задач
+# --- Очередь задач и кэш
 
 # Фоновые задачи. Без REDIS_URL брокер выполняет задачи сразу в процессе (локальная разработка).
 # Тесты — всегда без Redis: задачи выполняются в процессе теста, и их можно дождаться
 REDIS_URL = "" if TESTING else env("REDIS_URL", default="")
+
+# Кэш справочников (core/cache.py) — в том же Redis. Без Redis кэша нет, а не кэш в памяти процесса:
+# процессов API бывает несколько, админка — свой, и после правки в админке остальные отдавали бы старое
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_URL} if REDIS_URL
+          else {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 
 # --- Почта
 
