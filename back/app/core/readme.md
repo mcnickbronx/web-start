@@ -13,7 +13,7 @@
 | Что | Зачем |
 |---|---|
 | Общие схемы ответов | типовые ответы и формат ошибки 422 в Swagger |
-| Пагинация и сортировка | один формат списков на весь API |
+| Пагинация, сортировка и фильтры | один формат списков на весь API; фильтр — схема, поле → лукап Tortoise |
 | Обработка ошибок | любая ошибка выходит наружу в одном формате, на русском |
 | Переводы ошибок валидации | сообщения Pydantic по-русски |
 | Подключение к базе для API | асинхронный доступ к тем же таблицам, что у Django |
@@ -65,6 +65,35 @@ async def product_list(pagination: Pagination, sort: str = "-id"):
 
 Каждый список — два запроса к базе: сначала общее количество, потом сама страница.
 Про `count` стоит помнить на больших таблицах: он считает все строки, подходящие под фильтры.
+
+Фильтры — схема из `core.filters`: каждое поле — параметр запроса и лукап Tortoise, через который он
+попадает в запрос. Свой разбор параметров в эндпоинте не писать.
+
+```python
+from core.filters import FilterField, FilterSchema
+
+class ProductFilter(FilterSchema):
+    status: str | None = FilterField("status", description="Статус")
+    search: str | None = FilterField(["title__icontains", "sku__icontains"], description="По названию и артикулу", max_length=200)
+    price_from: int | None = FilterField("price__gte", description="Цена от")
+    category_id: list[int] | None = FilterField("category_id__in", description="Рубрики: ?category_id=1&category_id=2")
+
+@router.get("/list", response_model=ListOut[ProductOut], summary="Список товаров")
+async def product_list(pagination: Pagination, filters: Annotated[ProductFilter, Depends(ProductFilter.query)], sort: str = "-id"):
+    queryset = sort_queryset(filters.apply(Product.all()), sort, ["id", "title", "price"])
+    return await paginate(queryset, pagination)
+```
+
+Лукап — любой, который понимает Tortoise: без суффикса — точное совпадение, `__icontains`, `__gte`/`__lte`,
+`__in` со списком, через связь — `category__slug`. Список лукапов — запись подходит, если подошёл любой (поиск
+по нескольким полям); разные поля — все сразу. Не заданное поле и пустая строка запрос не меняют: пустое поле
+формы на сайте не прячет записи.
+
+В Swagger каждое поле — отдельным параметром со своим описанием и ограничениями. Неверное значение (дата `abc`)
+— `422` у поля, ошибка своего валидатора схемы — `422` с его текстом. Параметр, которого эндпоинт не объявил, — тоже `422`, а не тихий
+пропуск: опечатка `?staus=new` иначе отдала бы весь список, и это заметили бы не сразу. `page`, `row`, `sort`
+и другие параметры эндпоинта — не лишние. Правило «`date_to` без времени — до конца дня» (`back/CLAUDE.md`)
+фильтр сам не делает: такому полю нужен свой валидатор.
 
 ## Ошибки
 
