@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url'
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-01',
   devtools: { enabled: false },
-  // user — слой кабинета, в движок сайтов не входит: сайт с кабинетом добавляет его сам, как .playground
+  // user — слой кабинета, в движок сайтов не входит: сайт с кабинетом добавляет его второй строкой extends,
+  // тег тот же, без install — 'gh:mcnickbronx/web-start/front/layers/user#v2.4.0' (layers/user/readme.md)
   extends: ['./layers/core', './layers/form', './layers/page'],
   modules: ['@nuxt/ui'],
   css: [fileURLToPath(new URL('./app/assets/css/main.css', import.meta.url))],

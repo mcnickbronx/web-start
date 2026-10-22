@@ -114,6 +114,7 @@ export default defineNuxtConfig({
 | Заголовок ленты блога, статей на странице | `page: { blogTitle, blogDescription, feedRow }` в `app.config.ts` | [page](layers/page/readme.md) |
 | Вид ленты, карточек, статьи, меню рубрик | файл с тем же именем в `app/components/`: `PageBlog`, `PageFeed`, `PageArticle`, `PageCategoryMenu` | [page](layers/page/readme.md) |
 | Форма заявки | своя разметка на `useSiteForm(код)`; ловушку `FormTrap` и капчу `FormSmartCaptcha` не перекрывать — в них защита от спама | [form](layers/form/readme.md) |
+| Кабинет: вход, регистрация, профиль | вторая строка `extends` с тем же тегом, без `install`: `'gh:mcnickbronx/web-start/front/layers/user#v2.4.0'`; экраны — копия образца из [`.playground/app/pages`](.playground/app/pages/) | [user](layers/user/readme.md) |
 | Уведомление о cookie | `cookieNotice: { policyUrl, isEnabled }` в `app.config.ts`; свой вид — `CookieNotice` | [core](layers/core/readme.md) |
 | Страница ошибки | `app/error.vue`. Рисуется вместо `app.vue` — без каркаса: свой `<UApp>`, шапка и подвал — `<NuxtLayout>` внутри | |
 | Адреса бэкенда и сайта, поиск, Метрика | `.env` по `.env.txt` — без пересборки | [.env.txt](.env.txt) |
