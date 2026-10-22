@@ -30,6 +30,9 @@ A backend module and a frontend layer with the same name are a pair (`page` ↔ 
 - `form` — site forms: leads in the admin and by email, file uploads, captcha (simple math or Yandex SmartCaptcha).
 - `log` — application log in the database, viewable in the admin.
 
+What each module and layer solves, what is in progress and what is planned — the module map in
+[readme.md](readme.md#из-чего-собирается-проект) (Russian).
+
 ## How it works
 
 ```

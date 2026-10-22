@@ -37,12 +37,8 @@ front/
     └── app/              # шапка, главная с формой, вход, регистрация, кабинет
 ```
 
-| Слой | Модуль бэкенда | Описание |
-|---|---|---|
-| `core` | — | [layers/core/readme.md](layers/core/readme.md) |
-| `form` | `form` | [layers/form/readme.md](layers/form/readme.md) |
-| `page` | `page` | [layers/page/readme.md](layers/page/readme.md) |
-| `user` | `user` | [layers/user/readme.md](layers/user/readme.md) |
+Какую нужду закрывает каждый слой и его пара в бэкенде — [карта модулей](../readme.md#из-чего-собирается-проект),
+readme слоёв — в [оглавлении](#документация).
 
 ## Запуск демо-сайта
 
