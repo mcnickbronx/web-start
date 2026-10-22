@@ -113,7 +113,7 @@ app/<module>/
   - в модели — `DecimalField("Цена", max_digits=12, decimal_places=2)`; не `float` (`0.1 + 0.2` — не `0.3`) и не целые копейки (делить на 100 в админке и на фронте)
   - считать в `Decimal`; после процента, скидки, деления — до копеек: `quantize(Decimal("0.01"), ROUND_HALF_UP)` (15% скидки от `99.90` без этого — `84.9150`)
   - в JSON — строка с двумя знаками (`"990.50"`): поле схемы ответа — `Decimal`, в `description` — рубли («Цена, руб.»), пример — строкой; ответ без схемы FastAPI отдаст числом. Итог `total.sum` — так же
-  - Pydantic пишет `Decimal` как есть. Из базы (`get`, `filter`, `values`) — два знака, а у записи сразу после `create()` и у `Sum` Tortoise срезает нули (`990.5`, `1E+2`): такое значение перед ответом — тоже через `quantize`
+  - Pydantic пишет `Decimal` как есть, а Tortoise на многих путях (`create()`, `save()`, агрегаты `Sum`/`Min`/`Max`/`Avg`) срезает нули: `990.5`, `1E+2`. Поэтому деньги в ответе — всегда через `quantize(Decimal("0.01"), ROUND_HALF_UP)`, откуда бы значение ни пришло
 
 ## API
 - Только асинхронный код: эндпоинты и сервисы API — `async def`, база — Tortoise, внешние вызовы — `aiohttp`. Обычная `def`, Django ORM, `requests` в API — это производительность Django, а не FastAPI ([docs/benchmark.md](docs/benchmark.md)). Короткий расчёт на CPU (хеш пароля) — `asyncio.to_thread`
