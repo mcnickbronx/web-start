@@ -112,6 +112,7 @@ export default defineNuxtConfig({
 | Форма заявки | своя разметка на `useSiteForm(код)`; ловушку `FormTrap` и капчу `FormSmartCaptcha` не перекрывать — в них защита от спама | [form](layers/form/readme.md) |
 | Кабинет: вход, регистрация, профиль | вторая строка `extends` с тем же тегом, без `install`: `'gh:mcnickbronx/web-start/front/layers/user#v2.4.0'`; экраны — копия образца из [`.playground/app/pages`](.playground/app/pages/) | [user](layers/user/readme.md) |
 | Уведомление о cookie | `cookieNotice: { policyUrl, isEnabled }` в `app.config.ts`; свой вид — `CookieNotice` | [core](layers/core/readme.md) |
+| Название сайта и картинка ссылки в мессенджере | `seo: { siteName, image }` в `app.config.ts`; картинка 1200×630 — в `public/` | [core](layers/core/readme.md) |
 | Страница ошибки | `app/error.vue`. Рисуется вместо `app.vue` — без каркаса: свой `<UApp>`, шапка и подвал — `<NuxtLayout>` внутри | |
 | Адреса бэкенда и сайта, поиск, Метрика | `.env` по `.env.txt` — без пересборки | [.env.txt](.env.txt) |
 | Файлы как есть: картинки, иконки, свой `robots.txt` | `public/` — файл отдаётся раньше маршрутов движка; свой `robots.txt` уже не слушает `NUXT_PUBLIC_SITE_INDEXED` | [page](layers/page/readme.md) |
