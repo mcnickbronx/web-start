@@ -142,6 +142,27 @@ class AuthTest(ApiTestCase):
         self.assertEqual((saved.is_active, saved.first_name, saved.password), (False, "Анна", user.password))
         self.assertEqual(self.login().status_code, 401)
 
+    def test_enabled_by_admin_untouched(self):
+        """Ждёт кода только тот, у кого сняты и «Подтверждён», и «Активен». Включённого админом без подтверждения
+        регистрация, повтор кода и активация не трогают — ни имени, ни кода; войти он может через «Забыли пароль»."""
+        self.register(first_name="Анна")
+        models.CustomUser.objects.update(is_active=True, confirmation_code_created_at=timezone.now() - conf.CONFIRMATION_CODE_RESEND_INTERVAL)
+        code = models.CustomUser.objects.get(email="new@example.com").confirmation_code
+        self.assertEqual(self.error_field_list("/api/user/register", {"email": "new@example.com", "first_name": "Взломан"}), ["email"])
+        self.assertEqual(self.api.post("/api/user/activate/resend", json={"email": "new@example.com"}).status_code, 200)
+        self.wait_tasks()
+        self.assertEqual(len(mail.outbox), 1)  # только письмо регистрации
+        self.assertEqual(self.activate(code).status_code, 406)
+        user = models.CustomUser.objects.get(email="new@example.com")
+        self.assertEqual((user.first_name, user.confirmation_code, user.is_confirmed), ("Анна", code, False))
+
+        self.assertEqual(self.api.post("/api/user/password/reset", json={"email": "new@example.com"}).status_code, 200)
+        self.wait_tasks()
+        reset = {"email": "new@example.com", "code": models.CustomUser.objects.get(email="new@example.com").confirmation_code,
+                 "password_new": PASSWORD, "password_new_confirm": PASSWORD}
+        self.assertEqual(self.api.post("/api/user/password/reset/confirm", json=reset).status_code, 200)
+        self.assertEqual(self.login("new@example.com").status_code, 200)
+
     def test_weak_password_keeps_code_attempt(self):
         """Пароль проверяется до кода: слабый пароль — 422 у поля, попытка кода не тратится."""
         self.register()
