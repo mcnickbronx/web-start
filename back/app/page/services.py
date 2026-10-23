@@ -4,7 +4,6 @@
 (Tortoise, async-функции ниже). Поэтому HTML, анонс и дата публикации собираются
 при сохранении в админке, а API отдаёт готовое.
 """
-import io
 import uuid
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -14,10 +13,10 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone
-from PIL import Image, ImageOps
 from tortoise.expressions import Q, Subquery
 
 from core import cache
+from core.image import to_webp
 from core.slug import slugify_text
 from page import conf, models, models_async
 from page.markdown import excerpt_from_html, render_markdown
@@ -141,28 +140,8 @@ def check_image(upload: UploadedFile) -> str:
 
 
 def optimize_image(content: bytes, extension: str) -> tuple[bytes, str]:
-    """Ужимает до IMAGE_WIDTH_MAX и переводит в webp: фото с телефона на 8 МБ убьёт скорость страницы.
-
-    gif не трогаем — может быть анимированным. Файл не читается — отдаём как есть:
-    оптимизация некритичная и не должна мешать загрузке.
-    """
-    if extension == "gif":
-        return content, extension
-    try:
-        image = Image.open(io.BytesIO(content))
-        image.load()
-        # Телефон сохраняет снимок как есть, а поворот — тегом EXIF. В webp тег не переходит, и вертикальное
-        # фото легло бы на бок, — поворачиваем сами
-        image = ImageOps.exif_transpose(image)
-        image = image.convert("RGBA" if image.mode in ("RGBA", "LA", "P") else "RGB")
-        if image.width > conf.IMAGE_WIDTH_MAX:
-            height = round(image.height * conf.IMAGE_WIDTH_MAX / image.width)
-            image = image.resize((conf.IMAGE_WIDTH_MAX, height), Image.LANCZOS)
-        buffer = io.BytesIO()
-        image.save(buffer, format="WEBP", quality=82, method=4)
-        return buffer.getvalue(), "webp"
-    except Exception:
-        return content, extension
+    """Ужимает до IMAGE_WIDTH_MAX и переводит в webp — core.image.to_webp с пределом модуля."""
+    return to_webp(content, extension, width_max=conf.IMAGE_WIDTH_MAX)
 
 
 def prepare_image(image: models.PageImage, upload: UploadedFile) -> None:
