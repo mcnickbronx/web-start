@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     # в project/crontab, если есть, и папку; подробно — readme модуля
     "page",
     "form",
+    "live",
 ]
 
 # Только для админки: API-запросы через Django не проходят

@@ -19,7 +19,7 @@ A starter kit for web projects: a **Django + FastAPI** backend and a **Nuxt 4** 
 
 | Folder | What |
 |---|---|
-| `back/` | Backend. Django — models, migrations, admin; FastAPI — the API under `/api`; Tortoise ORM — async access to the same tables. Modules `user`, `page`, `form`, `log` |
+| `back/` | Backend. Django — models, migrations, admin; FastAPI — the API under `/api`; Tortoise ORM — async access to the same tables. Modules `user`, `page`, `form`, `log`, `live` |
 | `front/` | Site engine on Nuxt 4 and Nuxt UI 4: layers `core`, `form`, `page`, `user` and a demo site |
 
 A backend module and a frontend layer with the same name are a pair (`page` ↔ `page`,
@@ -29,6 +29,7 @@ A backend module and a frontend layer with the same name are a pair (`page` ↔ 
 - `page` — pages and blog from the admin (Markdown editor, images), SEO, `sitemap.xml`, redirects.
 - `form` — site forms: leads in the admin and by email, file uploads, captcha (simple math or Yandex SmartCaptcha).
 - `log` — application log in the database, viewable in the admin.
+- `live` — live events in the browser over WebSocket: the server notifies a signed-in user's open tabs (frontend layer — next step).
 
 What each module and layer solves, what is in progress and what is planned — the module map in
 [readme.md](readme.md#из-чего-собирается-проект) (Russian).

@@ -16,7 +16,7 @@
 
 | Папка | Что | Подробно |
 |---|---|---|
-| `back/` | бэкенд: Django — модели, миграции, админка; FastAPI — API; модули `user`, `page`, `form`, `log` | [back/readme.md](back/readme.md) |
+| `back/` | бэкенд: Django — модели, миграции, админка; FastAPI — API; модули `user`, `page`, `form`, `log`, `live` | [back/readme.md](back/readme.md) |
 | `front/` | движок сайтов на Nuxt 4 и Nuxt UI: слои `core`, `form`, `page`, `user` и демо-сайт | [front/readme.md](front/readme.md) |
 
 Модуль бэкенда и слой фронта с одним именем — пара: `page` ↔ `page`, `form` ↔ `form`.
@@ -47,6 +47,7 @@
 | Выгрузка списка админки в Excel | `core` | есть | [ядро](back/app/core/readme.md#выгрузка-в-excel) |
 | История изменений: кто, когда и что поменял | `core`; первыми — заявки | есть | [ядро](back/app/core/readme.md#история-изменений) |
 | Фоновые задачи и задачи по расписанию | `core`, `project` | есть | [ядро](back/app/core/readme.md#фоновые-задачи) |
+| Живые события в браузере (WebSocket) | модуль `live`; слой фронта — следующим шагом | в работе | [модуль](back/app/live/readme.md) |
 | Логика API из админки и команд | `core` | есть | [ядро](back/app/core/readme.md#асинхронный-сервис-из-админки) |
 | Настройки модулей из `.env` с проверкой | `core` | есть | [ядро](back/app/core/readme.md#настройки-модулей) |
 | Яндекс Метрика и уведомление о cookie | слой `core` | есть | [слой](front/layers/core/readme.md#яндекс-метрика) |
