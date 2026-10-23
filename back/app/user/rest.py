@@ -6,7 +6,7 @@ from core.schemas import MessageOut
 from user import auth, services
 from user.auth import CurrentSession, CurrentUser, get_session_by_token
 from user.schemas import (
-    CodeIn,
+    ActivateIn,
     EmailIn,
     PasswordChangeIn,
     PasswordResetConfirmIn,
@@ -24,19 +24,20 @@ UNAUTHORIZED = {401: {"model": MessageOut, "description": "Нет токена �
 BUSINESS = {406: {"model": MessageOut, "description": "Сообщение пользователю"}}
 
 
-@router.post("/register", response_model=MessageOut, summary="Регистрация",
-             description="Создаёт неактивного пользователя и отправляет код подтверждения на почту. "
-                         "Дальше — /activate. Код по умолчанию живёт 30 минут.")
+@router.post("/register", response_model=MessageOut, summary="Регистрация", responses=BUSINESS,
+             description="Создаёт неактивного пользователя без пароля и отправляет код подтверждения на почту. "
+                         "Дальше — /activate: код и пароль. Код по умолчанию живёт 30 минут. Адрес уже ждёт подтверждения — "
+                         "новый код (по умолчанию не чаще раза в минуту, раньше — 406) и имя из этого запроса.")
 async def register(data: RegisterIn):
-    await services.register(data.email, data.password, data.first_name, data.last_name)
+    await services.register(data.email, data.first_name, data.last_name)
     return {"message": "Код подтверждения отправлен на почту"}
 
 
 @router.post("/activate", response_model=TokenOut, summary="Подтверждение регистрации", responses=BUSINESS,
-             description="Активирует аккаунт по коду из письма и сразу входит: access — в ответе, "
-                         "refresh — в куке.")
-async def activate(data: CodeIn, request: Request, response: Response):
-    user = await services.activate(data.email, data.code)
+             description="Код из письма и пароль: пароль ставится здесь — его задаёт тот, у кого почта. "
+                         "Активирует аккаунт и сразу входит: access — в ответе, refresh — в куке.")
+async def activate(data: ActivateIn, request: Request, response: Response):
+    user = await services.activate(data.email, data.code, data.password)
     return await auth.login(request, response, user.id)
 
 

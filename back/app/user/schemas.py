@@ -54,14 +54,9 @@ class UserUpdateIn(BaseModel):
 
 
 class RegisterIn(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"example": {
-        "email": "user@example.com", "password": "0987Asdf", "password_confirm": "0987Asdf",
-        "first_name": "Иван", "last_name": "Иванов",
-    }})
+    model_config = ConfigDict(json_schema_extra={"example": {"email": "user@example.com", "first_name": "Иван", "last_name": "Иванов"}})
 
     email: Email = Field(..., max_length=254, description="Email")
-    password: str = Field(..., min_length=8, max_length=128, description="Пароль")
-    password_confirm: same_password_as("password") = Field(..., max_length=128, description="Пароль ещё раз")
     first_name: str = Field("", max_length=150, description="Имя")
     last_name: str = Field("", max_length=150, description="Фамилия")
 
@@ -77,6 +72,17 @@ class CodeIn(EmailIn):
 
     # [0-9], а не \d: \d пропускает цифры других алфавитов («１２３»), а сравнение кода на них падает
     code: str = Field(..., min_length=6, max_length=6, pattern=r"^[0-9]+$", description="Код из письма — шесть цифр")
+
+
+class ActivateIn(CodeIn):
+    """Пароль — здесь, а не при регистрации: его задаёт только тот, у кого почта."""
+
+    model_config = ConfigDict(json_schema_extra={"example": {
+        "email": "user@example.com", "code": "123456", "password": "0987Asdf", "password_confirm": "0987Asdf",
+    }})
+
+    password: str = Field(..., min_length=8, max_length=128, description="Пароль")
+    password_confirm: same_password_as("password") = Field(..., max_length=128, description="Пароль ещё раз")
 
 
 class PasswordResetConfirmIn(CodeIn):

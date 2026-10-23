@@ -15,7 +15,7 @@ export interface paths {
         put?: never;
         /**
          * Регистрация
-         * @description Создаёт неактивного пользователя и отправляет код подтверждения на почту. Дальше — /activate. Код по умолчанию живёт 30 минут.
+         * @description Создаёт неактивного пользователя без пароля и отправляет код подтверждения на почту. Дальше — /activate: код и пароль. Код по умолчанию живёт 30 минут. Адрес уже ждёт подтверждения — новый код (по умолчанию не чаще раза в минуту, раньше — 406) и имя из этого запроса.
          */
         post: operations["register_api_user_register_post"];
         delete?: never;
@@ -35,7 +35,7 @@ export interface paths {
         put?: never;
         /**
          * Подтверждение регистрации
-         * @description Активирует аккаунт по коду из письма и сразу входит: access — в ответе, refresh — в куке.
+         * @description Код из письма и пароль: пароль ставится здесь — его задаёт тот, у кого почта. Активирует аккаунт и сразу входит: access — в ответе, refresh — в куке.
          */
         post: operations["activate_api_user_activate_post"];
         delete?: never;
@@ -476,6 +476,38 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ActivateIn
+         * @description Пароль — здесь, а не при регистрации: его задаёт только тот, у кого почта.
+         * @example {
+         *       "code": "123456",
+         *       "email": "user@example.com",
+         *       "password": "0987Asdf",
+         *       "password_confirm": "0987Asdf"
+         *     }
+         */
+        ActivateIn: {
+            /**
+             * Email
+             * @description Email
+             */
+            email: string;
+            /**
+             * Code
+             * @description Код из письма — шесть цифр
+             */
+            code: string;
+            /**
+             * Password
+             * @description Пароль
+             */
+            password: string;
+            /**
+             * Password Confirm
+             * @description Пароль ещё раз
+             */
+            password_confirm: string;
+        };
         /** Body_upload_file_api_form_upload_file_post */
         Body_upload_file_api_form_upload_file_post: {
             /**
@@ -488,25 +520,6 @@ export interface components {
              * @description Файл
              */
             file: string;
-        };
-        /**
-         * CodeIn
-         * @example {
-         *       "code": "123456",
-         *       "email": "user@example.com"
-         *     }
-         */
-        CodeIn: {
-            /**
-             * Email
-             * @description Email
-             */
-            email: string;
-            /**
-             * Code
-             * @description Код из письма — шесть цифр
-             */
-            code: string;
         };
         /**
          * EmailIn
@@ -1027,9 +1040,7 @@ export interface components {
          * @example {
          *       "email": "user@example.com",
          *       "first_name": "Иван",
-         *       "last_name": "Иванов",
-         *       "password": "0987Asdf",
-         *       "password_confirm": "0987Asdf"
+         *       "last_name": "Иванов"
          *     }
          */
         RegisterIn: {
@@ -1038,16 +1049,6 @@ export interface components {
              * @description Email
              */
             email: string;
-            /**
-             * Password
-             * @description Пароль
-             */
-            password: string;
-            /**
-             * Password Confirm
-             * @description Пароль ещё раз
-             */
-            password_confirm: string;
             /**
              * First Name
              * @description Имя
@@ -1322,6 +1323,15 @@ export interface operations {
                     "application/json": components["schemas"]["MessageOut"];
                 };
             };
+            /** @description Сообщение пользователю */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
             /** @description Ошибка валидации запроса */
             422: {
                 headers: {
@@ -1342,7 +1352,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CodeIn"];
+                "application/json": components["schemas"]["ActivateIn"];
             };
         };
         responses: {

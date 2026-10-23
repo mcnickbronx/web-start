@@ -41,13 +41,14 @@ class CustomUserAdmin(UserAdmin):
     inlines = [UserSessionInline]
     ordering = ["email"]
     list_display = ["email", "first_name", "last_name", "is_active", "is_staff", "date_joined"]
-    list_filter = ["is_active", "is_staff", "is_superuser"]
+    list_filter = ["is_active", "is_confirmed", "is_staff", "is_superuser"]
     search_fields = ["email", "first_name", "last_name"]
-    readonly_fields = ["last_login", "date_joined", "confirmation_code_created_at", "password_changed_at"]
+    # is_confirmed меняют только регистрация и активация: выключают аккаунт галкой «Активен»
+    readonly_fields = ["last_login", "date_joined", "confirmation_code_created_at", "password_changed_at", "is_confirmed"]
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Персональные данные", {"fields": ("first_name", "last_name")}),
-        ("Права", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Права", {"fields": ("is_active", "is_confirmed", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Код подтверждения", {"fields": ("confirmation_code", "confirmation_code_created_at", "confirmation_code_attempts")}),
         ("Даты", {"fields": ("last_login", "date_joined", "password_changed_at")}),
     )

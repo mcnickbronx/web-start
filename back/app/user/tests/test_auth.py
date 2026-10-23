@@ -81,17 +81,77 @@ class AuthTest(ApiTestCase):
         self.assertEqual(self.api.post("/api/user/logout/all", headers=laptop).status_code, 200)
         self.assertEqual(self.api.get("/api/user/me", headers=laptop).status_code, 401)
 
-    def test_register_and_activate(self):
-        body = {"email": "new@example.com", "password": PASSWORD, "password_confirm": PASSWORD}
-        self.assertEqual(self.api.post("/api/user/register", json=body).status_code, 200)
+    def register(self, email="new@example.com", **name):
+        response = self.api.post("/api/user/register", json={"email": email, **name})
         self.wait_tasks()
+        return response
+
+    def activate(self, code, email="new@example.com", password=PASSWORD):
+        return self.api.post("/api/user/activate", json={"email": email, "code": code, "password": password, "password_confirm": password})
+
+    def test_register_and_activate(self):
+        """Регистрация — без пароля, пароль задаёт активация: код из письма и пароль — и сразу вход."""
+        self.assertEqual(self.register().status_code, 200)
         code = models.CustomUser.objects.get(email="new@example.com").confirmation_code
         self.assertIn(code, mail.outbox[0].body)
         self.assertEqual(self.login("new@example.com").status_code, 401)  # до подтверждения не войти
 
-        response = self.api.post("/api/user/activate", json={"email": "new@example.com", "code": code})
+        response = self.activate(code)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.api.get("/api/user/me", headers={"Authorization": f"Bearer {response.json()['access']}"}).status_code, 200)
         self.assertEqual(self.login("new@example.com").status_code, 200)
+        self.assertEqual(self.activate(code).status_code, 406)  # «уже активирован»
+
+    def test_squatter_cannot_sign_in(self):
+        """Кто первым зарегистрировал чужой адрес, своим паролем в аккаунт владельца не войдёт:
+        пароль задаёт тот, кто ввёл код из письма."""
+        self.api.post("/api/user/register", json={"email": "new@example.com", "password": "Chuzhoy-parol-2026", "password_confirm": "Chuzhoy-parol-2026"})
+        self.wait_tasks()
+        code = models.CustomUser.objects.get(email="new@example.com").confirmation_code  # пришёл владельцу почты
+        self.assertEqual(self.activate(code).status_code, 200)
+        self.assertEqual(self.login("new@example.com", "Chuzhoy-parol-2026").status_code, 401)
+        self.assertEqual(self.login("new@example.com").status_code, 200)
+
+    def test_register_again_while_waiting(self):
+        """Адрес ждёт кода — повторная регистрация шлёт новый код и берёт имя из неё, а не 422:
+        владелец адреса, которого опередили, регистрируется как обычно."""
+        self.assertEqual(self.register(first_name="Чужой").status_code, 200)
+        self.assertEqual(self.register(first_name="Анна").status_code, 406)  # в ту же минуту
+        models.CustomUser.objects.update(confirmation_code_created_at=timezone.now() - conf.CONFIRMATION_CODE_RESEND_INTERVAL)
+        self.assertEqual(self.register(first_name="Анна").status_code, 200)
+        self.assertEqual(len(mail.outbox), 2)
+        user = models.CustomUser.objects.get(email="new@example.com")
+        self.assertEqual(user.first_name, "Анна")
+        self.assertEqual(self.activate(user.confirmation_code).status_code, 200)
+
+    def test_disabled_account_untouched(self):
+        """Выключенный в админке аккаунт регистрация, повтор кода и активация не трогают — даже с верным кодом:
+        у него, как у ждущего кода, снят is_active, а отличает их признак «Подтверждён»."""
+        # Код остался от сброса пароля до выключения, повтор кода уже можно
+        sent_at = timezone.now() - conf.CONFIRMATION_CODE_RESEND_INTERVAL
+        user = create_user(is_active=False, confirmation_code="123456", confirmation_code_created_at=sent_at)
+        self.assertEqual(self.error_field_list("/api/user/register", {"email": "user@example.com", "first_name": "Чужой"}), ["email"])
+        response = self.activate("123456", email="user@example.com", password="Chuzhoy-parol-2026")
+        self.assertEqual(response.status_code, 406)
+        self.assertEqual(response.json()["message"], "Аккаунт уже активирован")
+        self.assertEqual(self.api.post("/api/user/activate/resend", json={"email": "user@example.com"}).status_code, 200)
+        self.wait_tasks()
+        self.assertEqual(len(mail.outbox), 0)
+
+        saved = models.CustomUser.objects.get(id=user.id)
+        self.assertEqual((saved.is_active, saved.first_name, saved.password), (False, "Анна", user.password))
+        self.assertEqual(self.login().status_code, 401)
+
+    def test_weak_password_keeps_code_attempt(self):
+        """Пароль проверяется до кода: слабый пароль — 422 у поля, попытка кода не тратится."""
+        self.register()
+        code = models.CustomUser.objects.get(email="new@example.com").confirmation_code
+        weak = {"email": "new@example.com", "code": code, "password": "12345678", "password_confirm": "12345678"}
+        self.assertEqual(self.error_field_list("/api/user/activate", weak), ["password"])
+        self.assertEqual(models.CustomUser.objects.get(email="new@example.com").confirmation_code_attempts, 0)
+        # Без пароля активации нет
+        self.assertEqual(self.error_field_list("/api/user/activate", {"email": "new@example.com", "code": code}), ["password", "password_confirm"])
+        self.assertEqual(self.activate(code).status_code, 200)
 
     def test_password_change_revokes_tokens(self):
         user = create_user()
@@ -104,18 +164,18 @@ class AuthTest(ApiTestCase):
     def test_field_errors(self):
         """Ошибка про поле — 422 у этого поля: сайт покажет её под ним, а не общим сообщением."""
         create_user()
-        taken = {"email": "user@example.com", "password": PASSWORD, "password_confirm": PASSWORD}
-        self.assertEqual(self.error_field_list("/api/user/register", taken), ["email"])
-        mismatch = {"email": "new@example.com", "password": PASSWORD, "password_confirm": "Drugoy-parol-2026"}
-        self.assertEqual(self.error_field_list("/api/user/register", mismatch), ["password_confirm"])
+        self.assertEqual(self.error_field_list("/api/user/register", {"email": "user@example.com"}), ["email"])
+        mismatch = {"email": "new@example.com", "code": "123456", "password": PASSWORD, "password_confirm": "Drugoy-parol-2026"}
+        self.assertEqual(self.error_field_list("/api/user/activate", mismatch), ["password_confirm"])
         # Нет такого email — ответ как на неверный код
-        self.assertEqual(self.error_field_list("/api/user/activate", {"email": "nobody@example.com", "code": "123456"}), ["code"])
+        nobody = {"email": "nobody@example.com", "code": "123456", "password": PASSWORD, "password_confirm": PASSWORD}
+        self.assertEqual(self.error_field_list("/api/user/activate", nobody), ["code"])
 
     def test_code_only_digits(self):
         """Код из цифр другого алфавита — 422 у поля, а не 500: сравнение кодов на таких символах падает."""
-        self.api.post("/api/user/register", json={"email": "new@example.com", "password": PASSWORD, "password_confirm": PASSWORD})
-        self.wait_tasks()
-        self.assertEqual(self.error_field_list("/api/user/activate", {"email": "new@example.com", "code": "１２３４５６"}), ["code"])
+        self.register()
+        digits = {"email": "new@example.com", "code": "１２３４５６", "password": PASSWORD, "password_confirm": PASSWORD}
+        self.assertEqual(self.error_field_list("/api/user/activate", digits), ["code"])
 
     def test_code_resend_once_a_minute(self):
         """Повтор кода в ту же минуту — 406 с временем ожидания, а не «код отправлен» без письма:

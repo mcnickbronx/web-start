@@ -120,25 +120,33 @@ async def check_code(user: CustomUser, code: str) -> None:
         raise HTTPException(406, "Срок действия кода истёк, запросите новый")
 
 
-async def register(email: str, password: str, first_name: str, last_name: str) -> CustomUser:
-    """Неактивный пользователь и код подтверждения на почту."""
+async def register(email: str, first_name: str, last_name: str) -> CustomUser:
+    """Неактивный пользователь без пароля и код подтверждения на почту. Пароль ставит активация:
+    его задаёт только тот, у кого почта, — кто первым зарегистрировал чужой адрес, им не войдёт."""
     try:
         validate_email(email)
     except ValidationError as exc:
         raise field_error({"email": "Некорректный email"}) from exc
     email_taken = field_error({"email": "Пользователь с таким email уже зарегистрирован"})
-    if await CustomUser.filter(email=email).exists():
-        raise email_taken
-    await _validate_password(password, "password")
+    user = await CustomUser.get_or_none(email=email)
+    if user is not None:
+        # Подтверждённый — и выключенный в админке тоже — регистрация не трогает
+        if user.is_confirmed:
+            raise email_taken
+        # Ждёт кода: новый код (в ту же минуту — 406) и имя из этого запроса. Пароля у него нет —
+        # переписать нечего, а владелец адреса, которого опередили, регистрируется как обычно
+        await issue_code(user, "activation")
+        await CustomUser.filter(id=user.id, is_confirmed=False).update(first_name=first_name, last_name=last_name)
+        return user
 
     try:
         user = await CustomUser.create(
             email=email,
-            password=await asyncio.to_thread(make_password, password),
+            password=make_password(None),  # непригодный: войти нельзя, пока активация не задаст пароль
             first_name=first_name,
             last_name=last_name,
             is_active=False,
-            password_changed_at=datetime.now(timezone.utc),
+            is_confirmed=False,
         )
     except IntegrityError as exc:
         # Два одновременных запроса с одним email: проверку выше прошли оба
@@ -147,23 +155,33 @@ async def register(email: str, password: str, first_name: str, last_name: str) -
     return user
 
 
-async def activate(email: str, code: str) -> CustomUser:
+async def activate(email: str, code: str, password: str) -> CustomUser:
+    """Код из письма и пароль: аккаунт активен, пароль — того, кто ввёл код."""
     user = await CustomUser.get_or_none(email=email)
     if user is None:
         raise _wrong_code()
-    if user.is_active:
+    if user.is_confirmed:
+        # И для выключенного в админке: активация его не включает
         raise HTTPException(406, "Аккаунт уже активирован")
 
+    # Пароль — до кода: слабый пароль не тратит попытку
+    await _validate_password(password, "password")
     await check_code(user, code)
+    user.password = await asyncio.to_thread(make_password, password)
+    user.password_changed_at = datetime.now(timezone.utc)
     user.is_active = True
+    user.is_confirmed = True
     user.confirmation_code = None
     user.confirmation_code_created_at = None
-    await user.save(update_fields=["is_active", "confirmation_code", "confirmation_code_created_at"])
+    await user.save(update_fields=[
+        "password", "password_changed_at", "is_active", "is_confirmed", "confirmation_code", "confirmation_code_created_at",
+    ])
     return user
 
 
 async def resend_activation_code(email: str) -> None:
-    user = await CustomUser.get_or_none(email=email, is_active=False)
+    # Ждущий кода — по признаку, а не по is_active: выключенному в админке письма нет
+    user = await CustomUser.get_or_none(email=email, is_confirmed=False)
     if user is None:
         # Не сообщаем, есть ли такой email и активирован ли он
         return

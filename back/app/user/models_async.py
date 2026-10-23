@@ -29,6 +29,7 @@ class CustomUser(Model):
     confirmation_code_created_at = fields.DatetimeField(null=True)
     confirmation_code_attempts = fields.SmallIntField(default=0)
     password_changed_at = fields.DatetimeField(null=True)
+    is_confirmed = fields.BooleanField(default=True)
     # groups: связь на auth.Group (вне проекта) не генерируется
     # user_permissions: связь на auth.Permission (вне проекта) не генерируется
 

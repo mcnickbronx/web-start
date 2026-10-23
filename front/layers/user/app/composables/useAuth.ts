@@ -48,10 +48,10 @@ export function useAuth() {
 
     login: (body: Schema['TokenPairIn']) => signIn(apiRequest(api.POST('/api/user/pair', { body }))),
 
-    /** Регистрация: пользователь создаётся неактивным, код приходит на почту */
+    /** Регистрация без пароля: пользователь создаётся неактивным, код приходит на почту */
     register: (body: Schema['RegisterIn']) => apiRequest(api.POST('/api/user/register', { body })),
-    /** Код из письма — активация и сразу вход */
-    activate: (body: Schema['CodeIn']) => signIn(apiRequest(api.POST('/api/user/activate', { body }))),
+    /** Код из письма и пароль — активация и сразу вход. Пароль здесь: его задаёт только тот, у кого почта */
+    activate: (body: Schema['ActivateIn']) => signIn(apiRequest(api.POST('/api/user/activate', { body }))),
     resendCode: (email: string) => apiRequest(api.POST('/api/user/activate/resend', { body: { email } })),
 
     /** Забыли пароль: код на почту. Ответ одинаковый, есть такой email или нет */

@@ -8,21 +8,24 @@ const step = ref<'form' | 'code'>('form')
 const email = ref('')
 const message = ref('')
 
+// Пароль — на шаге кода, а не регистрации: его задаёт только тот, у кого почта
 const registerFieldList: AuthFormField[] = [
   { name: 'email', type: 'email', label: 'Email', required: true },
   { name: 'first_name', type: 'text', label: 'Имя' },
   { name: 'last_name', type: 'text', label: 'Фамилия' },
+]
+const codeFieldList: AuthFormField[] = [
+  { name: 'code', type: 'otp', label: 'Код из письма', length: 6 },
   { name: 'password', type: 'password', label: 'Пароль', description: 'Не короче 8 символов', required: true },
   { name: 'password_confirm', type: 'password', label: 'Пароль ещё раз', required: true },
 ]
-const codeFieldList: AuthFormField[] = [{ name: 'code', type: 'otp', label: 'Код из письма', length: 6 }]
 
 function showError(error: ApiError | null) {
   message.value = error?.message ?? ''
   form.value?.formRef?.setErrors(toFormErrorList(error?.fieldMap))
 }
 
-async function onRegister(event: FormSubmitEvent<{ email: string, password: string, password_confirm: string, first_name?: string, last_name?: string }>) {
+async function onRegister(event: FormSubmitEvent<{ email: string, first_name?: string, last_name?: string }>) {
   const { error } = await auth.register(event.data)
   showError(error)
   if (!error) {
@@ -31,9 +34,9 @@ async function onRegister(event: FormSubmitEvent<{ email: string, password: stri
   }
 }
 
-async function onCode(event: FormSubmitEvent<{ code: string[] | string }>) {
+async function onCode(event: FormSubmitEvent<{ code: string[] | string, password: string, password_confirm: string }>) {
   const code = Array.isArray(event.data.code) ? event.data.code.join('') : event.data.code
-  const { error } = await auth.activate({ email: email.value, code })
+  const { error } = await auth.activate({ ...event.data, email: email.value, code })
   showError(error)
   if (!error) await navigateTo('/lk')
 }
@@ -46,7 +49,7 @@ async function resend() {
 
 <template>
   <UPageCard class="mx-auto max-w-md">
-    <UAuthForm v-if="step === 'form'" ref="form" title="Регистрация" icon="i-lucide-user-plus" :fields="registerFieldList" :submit="{ label: 'Зарегистрироваться' }" @submit="onRegister">
+    <UAuthForm v-if="step === 'form'" ref="form" title="Регистрация" icon="i-lucide-user-plus" :fields="registerFieldList" :submit="{ label: 'Получить код' }" @submit="onRegister">
       <template #validation>
         <UAlert v-if="message" color="error" icon="i-lucide-circle-alert" :title="message" />
       </template>
