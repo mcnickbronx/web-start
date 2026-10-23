@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='customuser',
             name='is_confirmed',
-            field=models.BooleanField(default=True, help_text='Снят — регистрация из API ждёт кода из письма. Заведённые в админке подтверждены сразу; выключить аккаунт — галка «Активен»', verbose_name='Подтверждён'),
+            field=models.BooleanField(default=True, help_text='Снят — регистрация из API ждёт кода из письма. Заведённые в админке подтверждены сразу; галка «Активен» на неподтверждённом ставит и эту. Выключить аккаунт — снять «Активен»', verbose_name='Подтверждён'),
         ),
     ]

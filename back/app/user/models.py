@@ -37,7 +37,7 @@ class CustomUser(AbstractUser):
     # JWT, выпущенные раньше, недействительны: смена пароля разлогинивает все устройства
     password_changed_at = models.DateTimeField("Пароль изменён", null=True, blank=True)
     # Ждущего кода отличает этот признак, а не is_active: у выключенного в админке is_active тоже снят
-    is_confirmed = models.BooleanField("Подтверждён", default=True, help_text="Снят — регистрация из API ждёт кода из письма. Заведённые в админке подтверждены сразу; выключить аккаунт — галка «Активен»")
+    is_confirmed = models.BooleanField("Подтверждён", default=True, help_text="Снят — регистрация из API ждёт кода из письма. Заведённые в админке подтверждены сразу; галка «Активен» на неподтверждённом ставит и эту. Выключить аккаунт — снять «Активен»")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

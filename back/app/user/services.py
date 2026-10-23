@@ -130,14 +130,14 @@ async def register(email: str, first_name: str, last_name: str) -> CustomUser:
     email_taken = field_error({"email": "Пользователь с таким email уже зарегистрирован"})
     user = await CustomUser.get_or_none(email=email)
     if user is not None:
-        # Ждёт кода только не подтверждённый и не включённый: подтверждённого, выключенного
-        # и включённого админом регистрация не трогает
-        if user.is_confirmed or user.is_active:
+        # Ждёт кода тот, у кого «Подтверждён» снята: подтверждённого — и выключенного в админке тоже —
+        # регистрация не трогает
+        if user.is_confirmed:
             raise email_taken
         # Ждёт кода: новый код (в ту же минуту — 406) и имя из этого запроса. Пароля у него нет —
         # переписать нечего, а владелец адреса, которого опередили, регистрируется как обычно
         await issue_code(user, "activation")
-        await CustomUser.filter(id=user.id, is_confirmed=False, is_active=False).update(first_name=first_name, last_name=last_name)
+        await CustomUser.filter(id=user.id, is_confirmed=False).update(first_name=first_name, last_name=last_name)
         return user
 
     try:
@@ -161,8 +161,8 @@ async def activate(email: str, code: str, password: str) -> CustomUser:
     user = await CustomUser.get_or_none(email=email)
     if user is None:
         raise _wrong_code()
-    if user.is_confirmed or user.is_active:
-        # И для выключенного в админке (активация его не включает), и для включённого админом — тот входит через сброс пароля
+    if user.is_confirmed:
+        # И для выключенного в админке: активация его не включает
         raise HTTPException(406, "Аккаунт уже активирован")
 
     # Пароль — до кода: слабый пароль не тратит попытку
@@ -181,8 +181,8 @@ async def activate(email: str, code: str, password: str) -> CustomUser:
 
 
 async def resend_activation_code(email: str) -> None:
-    # Ждущий кода — не подтверждён и не включён: выключенному и включённому админом письма нет
-    user = await CustomUser.get_or_none(email=email, is_confirmed=False, is_active=False)
+    # Ждёт кода тот, у кого «Подтверждён» снята, — по признаку, а не по is_active: выключенному в админке письма нет
+    user = await CustomUser.get_or_none(email=email, is_confirmed=False)
     if user is None:
         # Не сообщаем, есть ли такой email и активирован ли он
         return

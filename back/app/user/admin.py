@@ -43,7 +43,7 @@ class CustomUserAdmin(UserAdmin):
     list_display = ["email", "first_name", "last_name", "is_active", "is_staff", "date_joined"]
     list_filter = ["is_active", "is_confirmed", "is_staff", "is_superuser"]
     search_fields = ["email", "first_name", "last_name"]
-    # is_confirmed меняют только регистрация и активация: выключают аккаунт галкой «Активен»
+    # is_confirmed ставят активация и галка «Активен» (включил ждущего кода — подтвердил), снимает только регистрация
     readonly_fields = ["last_login", "date_joined", "confirmation_code_created_at", "password_changed_at", "is_confirmed"]
     fieldsets = (
         (None, {"fields": ("email", "password")}),
@@ -55,3 +55,9 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {"classes": ("wide",), "fields": ("email", "usable_password", "password1", "password2")}),
     )
+
+    def save_model(self, request, obj, form, change):
+        # Админ включил ждущего кода — ручается за адрес: «включён, но не подтверждён» не бывает
+        if obj.is_active and not obj.is_confirmed:
+            obj.is_confirmed = True
+        super().save_model(request, obj, form, change)
