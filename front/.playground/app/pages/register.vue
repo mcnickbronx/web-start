@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { AuthFormField, FormSubmitEvent } from '#ui/types'
 
 const auth = useAuth()
 const toast = useToast()

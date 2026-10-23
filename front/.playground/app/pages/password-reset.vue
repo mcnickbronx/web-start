@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { AuthFormField, FormSubmitEvent } from '#ui/types'
 
 // Забыли пароль: email → код из письма и новый пароль → сразу вход
 const auth = useAuth()

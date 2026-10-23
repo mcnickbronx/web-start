@@ -23,8 +23,7 @@ extends: [
   только слой и движок одной версии.
 - **Экранов в слое нет** — образец в демо-сайте: [`.playground/app/pages/`](../../.playground/app/pages/) (`login.vue`, `register.vue`,
   `password-reset.vue`, `lk/`), каркас кабинета `layouts/lk.vue` и `utils/form-errors.ts`. Их копируют
-  в `app/` сайта и переделывают под макет. В скопированном типы Nuxt UI — из `'#ui/types'`, а не из
-  `'@nuxt/ui'`: этот пакет у сайта не свой, а движка, и `nuxt typecheck` сайта его не найдёт.
+  в `app/` сайта и переделывают под макет.
 - Адрес сайта — в `CORS_ALLOWED_ORIGINS` бэкенда (ниже, «Что стоит знать»).
 
 ## Как пользоваться

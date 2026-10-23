@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import type { TableColumn } from '#ui/types'
 import type { components } from '#api-types'
 
 definePageMeta({ layout: 'lk', middleware: 'auth' })
