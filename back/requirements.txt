@@ -12,7 +12,7 @@ psycopg[binary]==3.3.5
 # API: FastAPI, Tortoise, JWT
 fastapi==0.141.1
 uvicorn[standard]==0.53.0
-tortoise-orm[asyncpg]==1.1.8
+tortoise-orm[asyncpg]==1.1.9
 pyjwt==2.15.1
 
 # Фоновые задачи и кэш. Сервер Redis — только в профиле full, пакеты нужны всегда (core/broker.py, core/cache.py)
