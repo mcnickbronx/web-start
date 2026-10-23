@@ -67,7 +67,7 @@ services:
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.entrypoints=websecure
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.service=${COMPOSE_PROJECT_NAME}-app
       # Вход, коды из писем, формы и вход в админку — не чаще 10 запросов в минуту с адреса: подбор паролей, спам
-      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.rule=Host(`${DOMAIN}`) && (Path(`/api/user/pair`) || Path(`/api/user/register`) || PathPrefix(`/api/user/activate`) || PathPrefix(`/api/user/password/reset`) || Path(`/api/form/create`) || Path(`/api/form/upload-file`) || Path(`/admin/login/`))
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.rule=Host(`${DOMAIN}`) && (Path(`/api/user/pair`) || Path(`/api/user/register`) || PathPrefix(`/api/user/activate`) || PathPrefix(`/api/user/password/reset`) || Path(`/api/form/create`) || Path(`/admin/login/`))
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.entrypoints=websecure
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.service=${COMPOSE_PROJECT_NAME}-app
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-limit.middlewares=${COMPOSE_PROJECT_NAME}-cors,login-ratelimit@file
@@ -78,6 +78,11 @@ services:
       - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-cors.headers.accessControlAllowMethods=GET,POST,OPTIONS
       - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-cors.headers.accessControlAllowHeaders=Content-Type,Authorization
       - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-cors.headers.accessControlMaxAge=600
+      # Загрузка файлов формы — тот же CORS и лимит, но свой роутер и свой счётчик: файлы заявки не съедают попытки отправки и входа
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-upload.rule=Host(`${DOMAIN}`) && Path(`/api/form/upload-file`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-upload.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-upload.service=${COMPOSE_PROJECT_NAME}-app
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-upload.middlewares=${COMPOSE_PROJECT_NAME}-cors,login-ratelimit@file
       # www.<домен> → <домен>
       - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-www.redirectregex.regex=^https://www\.(.+)
       - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-www.redirectregex.replacement=https://$${1}
