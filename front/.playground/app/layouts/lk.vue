@@ -3,6 +3,10 @@ import type { NavigationMenuItem } from '#ui/types'
 
 const auth = useAuth()
 const toast = useToast()
+const live = useLive()
+const isOnline = computed(() => live.status.value === 'ready')
+// Пример события от модуля live бэкенда: hub.send(user_id, {"type": "notice", "title": "…"})
+live.on('notice', event => toast.add({ title: String(event.title) }))
 const itemList: NavigationMenuItem[] = [
   { label: 'Статьи', icon: 'i-lucide-newspaper', to: '/lk', exact: true },
   { label: 'Профиль', icon: 'i-lucide-user', to: '/lk/profile' },
@@ -24,6 +28,7 @@ async function logout() {
     <UDashboardSidebar collapsible resizable>
       <template #header="{ collapsed }">
         <span v-if="!collapsed" class="font-semibold">Демо-сайт</span>
+        <UBadge v-if="!collapsed" :color="isOnline ? 'success' : 'neutral'" variant="subtle" :label="isOnline ? 'на связи' : 'нет связи'" class="ms-auto" />
       </template>
       <template #default="{ collapsed }">
         <UNavigationMenu :items="itemList" :collapsed="collapsed" orientation="vertical" />

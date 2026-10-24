@@ -30,10 +30,11 @@ front/
 ├── layers/
 │   ├── core/             # клиент API с типами, разбор ошибок
 │   ├── form/             # формы сайта и отправка заявок
+│   ├── live/             # живые события в кабинете — в движок сайтов не входит
 │   ├── page/             # блог и страницы из админки, SEO, sitemap.xml
 │   └── user/             # вход и токены для личного кабинета — в движок сайтов не входит
 └── .playground/          # демо-сайт: на нём движок разрабатывают и проверяют
-    ├── nuxt.config.ts    # подключает движок и слой user
+    ├── nuxt.config.ts    # подключает движок и слои user, live
     └── app/              # шапка, главная с формой, вход, регистрация, кабинет
 ```
 
@@ -111,6 +112,7 @@ export default defineNuxtConfig({
 | Вид ленты, карточек, статьи, меню рубрик | файл с тем же именем в `app/components/`: `PageBlog`, `PageFeed`, `PageArticle`, `PageCategoryMenu` | [page](layers/page/readme.md) |
 | Форма заявки | своя разметка на `useSiteForm(код)`; ловушку `FormTrap` и капчу `FormSmartCaptcha` не перекрывать — в них защита от спама | [form](layers/form/readme.md) |
 | Кабинет: вход, регистрация, профиль | вторая строка `extends` с тем же тегом, без `install`: `'gh:mcnickbronx/web-start/front/layers/user#v2.4.0'`; экраны — копия образца из [`.playground/app/pages`](.playground/app/pages/) | [user](layers/user/readme.md) |
+| Живые события в кабинете | третья строка `extends` с тем же тегом: `'gh:mcnickbronx/web-start/front/layers/live#v2.4.0'`; `useLive().on(тип, …)`; на бэкенде — модуль `live` | [live](layers/live/readme.md) |
 | Уведомление о cookie | `cookieNotice: { policyUrl, isEnabled }` в `app.config.ts`; свой вид — `CookieNotice` | [core](layers/core/readme.md) |
 | Название сайта и картинка ссылки в мессенджере | `seo: { siteName, image }` в `app.config.ts`; картинка 1200×630 — в `public/` | [core](layers/core/readme.md) |
 | Страница ошибки | `app/error.vue`. Рисуется вместо `app.vue` — без каркаса: свой `<UApp>`, шапка и подвал — `<NuxtLayout>` внутри | |
@@ -173,5 +175,6 @@ export default defineNuxtConfig({
 - [Бэкенд](../back/readme.md) — Django + FastAPI, модули page, form, user
 - [Слой core](layers/core/readme.md) — клиент API, типы, ошибки
 - [Слой user](layers/user/readme.md) — вход, кабинет, где живут токены
+- [Слой live](layers/live/readme.md) — живые события в кабинете: одно соединение на вкладку, вход токеном, переподключение
 - [Слой form](layers/form/readme.md) — формы сайта, ловушки для ботов, откуда пришёл посетитель
 - [Слой page](layers/page/readme.md) — блог и страницы из админки, адреса, SEO, карта сайта
