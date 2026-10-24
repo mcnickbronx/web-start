@@ -20,6 +20,14 @@ describe('versionDiff', () => {
       .toEqual(['nuxt ^4.6.2 → 4.6.2', 'vue ^3.5.44 → 3.5.44'])
   })
 
+  it('vue-router — тоже из правила', () => {
+    expect(versionDiff(engine, { 'nuxt': '4.6.2', 'vue': '3.5.44', 'vue-router': '5.3.0' })).toEqual(['vue-router 5.3.0 → 5.4.0'])
+  })
+
+  it('пакет, которого нет у движка, — не проверяется', () => {
+    expect(versionDiff({ nuxt: '4.6.2' }, { 'nuxt': '4.6.2', 'vue-router': '5.3.0' })).toEqual([])
+  })
+
   it('не объявленное у сайта и пакеты не из правила — не проверяются', () => {
     expect(versionDiff(engine, { 'nuxt': '4.6.2', 'vue': '3.5.44', '@nuxt/ui': '4.0.0' })).toEqual([])
   })
