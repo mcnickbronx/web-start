@@ -1,9 +1,11 @@
 from django.test import override_settings
+from django.urls import reverse
 
 from core import cache
 from core.tests.api import ApiTestCase
 from page.models import PageCategory
 from page.tests.create import create_page_category
+from user.tests.create import create_user
 
 LOCMEM = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "page-category-cache"}}
 # Порт 1 закрыт: соединение отклоняется сразу, как у остановленного Redis
@@ -70,3 +72,16 @@ class CategoryListCacheTest(ApiTestCase):
         self.assertEqual(self.name_list(), ["Новости"])
         PageCategory.objects.filter(pk=news.pk).delete()  # «удалить выбранные» в админке
         self.assertEqual(self.name_list(), [])
+
+    def test_cleared_on_move_in_admin(self):
+        """Рубрику перенесли в другую в админке — справочник сразу новым деревом, а не через срок кэша."""
+        news = create_page_category("Новости", sort_order=1)
+        sale = create_page_category("Акции", sort_order=2)
+        self.assertEqual(self.name_list(), ["Новости", "Акции"])
+        self.client.force_login(create_user(email="admin@example.com", is_staff=True, is_superuser=True))
+        response = self.client.post(reverse("admin:page_pagecategory_change", args=[sale.pk]), {
+            "name": sale.name, "parent": news.pk, "slug": sale.slug, "sort_order": sale.sort_order, "is_active": "on", "is_indexed": "on",
+        })
+        self.assertEqual(response.status_code, 302)
+        tree = self.api.get("/api/page/category/info").json()
+        self.assertEqual([(item["name"], [child["name"] for child in item["child_list"]]) for item in tree], [("Новости", ["Акции"])])

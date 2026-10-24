@@ -23,7 +23,7 @@ class PageImageOut(BaseModel):
 
 
 class PageCategoryOut(BaseModel):
-    """Рубрика в справочнике и вложенным объектом у статьи."""
+    """Рубрика вложенным объектом у статьи."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -35,6 +35,12 @@ class PageCategoryOut(BaseModel):
     @property
     def path(self) -> str:
         return build_path(self.slug)
+
+
+class PageCategoryTreeOut(PageCategoryOut):
+    """Рубрика в справочнике: дерево, подрубрики — внутри."""
+
+    child_list: list["PageCategoryTreeOut"] = Field(..., description="Подрубрики в порядке из админки; нет — пустой список")
 
 
 class PageCategoryDetailOut(PageCategoryOut):

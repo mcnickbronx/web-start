@@ -71,7 +71,7 @@ app/<module>/
 
 Выгрузка списка админки в Excel — `export_xlsx` из `core.xlsx` в `actions`: колонки как в `list_display`, свою выгрузку не писать.
 
-Дерево из плоского списка (рубрики, вложенные страницы, папки) — `core.tree`: вложенный JSON — `build_tree`, узел с потомками — `descendant_ids`, перенос без цикла — `check_parent`; своё не писать.
+Дерево из плоского списка (рубрики, вложенные страницы, папки) — `core.tree`: вложенный JSON — `build_tree`, узел с потомками — `descendant_ids`, перенос без цикла — `check_parent`; своё не писать. Образец — рубрики блога: `category_list` в `page/services.py`, форма рубрики в `page/admin.py`.
 
 Слаг публичного адреса (страница, товар, рубрика) — `slugify_text` из `core.slug`, не `prepopulated_fields`: транслит один для всех модулей.
 

@@ -32,9 +32,11 @@ class PageCategory(SeoModel):
     """Рубрика блога: открывается по своему адресу со списком статей."""
 
     name = models.CharField("Название", max_length=200)
+    # Дерево — core.tree: в админке перенос без цикла, справочник на сайте — деревом
+    parent = models.ForeignKey("self", models.PROTECT, verbose_name="Родительская рубрика", null=True, blank=True, related_name="child_set", help_text="Пусто — рубрика верхнего уровня")
     description = models.TextField("Описание", blank=True)
     sort_order = models.PositiveIntegerField("Порядок", default=100)
-    is_active = models.BooleanField("Показывать на сайте", default=True, help_text="Выключено — рубрика и её статьи скрыты")
+    is_active = models.BooleanField("Показывать на сайте", default=True, help_text="Выключено — рубрика и её статьи скрыты. Подрубрики остаются на сайте и встают в меню наверх")
 
     class Meta:
         verbose_name = "Рубрика"

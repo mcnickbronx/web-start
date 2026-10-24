@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
 
+from core.tree import check_parent
 from page import services
 from page.models import Page, PageCategory, PageImage, PageRedirect
 from page.widgets import MarkdownWidget
@@ -25,6 +26,21 @@ class SlugForm(forms.ModelForm):
             )
         except ValidationError as exc:
             self.add_error("slug", exc)
+        return cleaned_data
+
+
+class PageCategoryForm(SlugForm):
+    """Перенос рубрики — без цикла: не в саму себя и не в свою подрубрику, иначе ветка пропала бы с сайта."""
+
+    def clean(self):
+        cleaned_data = super().clean()
+        parent = cleaned_data.get("parent")
+        if parent is not None:
+            # parent.pk, а не строка из запроса: со строковым id check_parent цикла не узнаёт
+            try:
+                check_parent(PageCategory.objects.values("id", "parent_id"), node_id=self.instance.pk, parent_id=parent.pk)
+            except ValueError:
+                self.add_error("parent", "Нельзя вложить рубрику в саму себя или в её подрубрику")
         return cleaned_data
 
 
@@ -61,14 +77,14 @@ class PageImageForm(forms.ModelForm):
 
 @admin.register(PageCategory)
 class PageCategoryAdmin(admin.ModelAdmin):
-    form = SlugForm
-    list_display = ["name", "slug", "sort_order", "is_active", "date_modified"]
+    form = PageCategoryForm
+    list_display = ["name", "parent", "slug", "sort_order", "is_active", "date_modified"]
     list_editable = ["sort_order", "is_active"]
     list_filter = ["is_active"]
     search_fields = ["name", "slug"]
     readonly_fields = ["date_add", "date_modified"]
     fieldsets = [
-        (None, {"fields": ["name", "slug", "description", "sort_order", "is_active"]}),
+        (None, {"fields": ["name", "parent", "slug", "description", "sort_order", "is_active"]}),
         ("SEO", {"fields": ["seo_title", "seo_description", "is_indexed"]}),
         ("Даты", {"fields": ["date_add", "date_modified"]}),
     ]

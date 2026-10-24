@@ -18,6 +18,7 @@ from tortoise.expressions import Q, Subquery
 from core import cache
 from core.image import to_webp
 from core.slug import slugify_text
+from core.tree import build_tree
 from page import conf, models, models_async
 from page.markdown import excerpt_from_html, render_markdown
 
@@ -192,10 +193,19 @@ def feed_queryset():
 
 
 async def category_list() -> list[dict]:
-    """Рубрики, которые показываются на сайте, в порядке из админки. Из кэша — словарями, не объектами ORM."""
-    return await cache.get_or_set(
-        CATEGORY_LIST_CACHE_KEY, lambda: models_async.PageCategory.filter(is_active=True).values("id", "name", "slug"), ttl=600,
-    )
+    """Рубрики, которые показываются на сайте, деревом: подрубрики — в `child_list`, на каждом уровне — в порядке
+    из админки. Подрубрика скрытой рубрики — в корне. Из кэша — словарями, не объектами ORM."""
+
+    async def fetch() -> list[dict]:
+        rows = await (
+            models_async.PageCategory.filter(is_active=True).order_by("sort_order", "name")
+            .values("id", "parent_id", "name", "slug", "sort_order")
+        )
+        # Названия сравнивает база, как в списке админки, а не Python; build_tree сортирует устойчиво —
+        # при равном sort_order порядок из базы остаётся, у плоских рубрик он ровно прежний
+        return build_tree(rows, order=("sort_order",))
+
+    return await cache.get_or_set(CATEGORY_LIST_CACHE_KEY, fetch, ttl=600)
 
 
 async def get_page(slug: str) -> models_async.Page:

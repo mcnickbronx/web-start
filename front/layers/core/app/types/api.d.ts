@@ -271,7 +271,7 @@ export interface paths {
         };
         /**
          * Справочник рубрик
-         * @description Без авторизации. Показываемые на сайте рубрики в порядке из админки — для меню и фильтра ленты. У каждой рубрики свой адрес в корне сайта: `path`.
+         * @description Без авторизации. Показываемые на сайте рубрики деревом — для меню и фильтра ленты: подрубрики — в `child_list`, на каждом уровне — в порядке из админки. Подрубрика скрытой рубрики — в корне. У каждой рубрики свой адрес в корне сайта: `path`. Фильтр ленты `category_slug` — только статьи самой рубрики, без подрубрик.
          */
         get: operations["category_info_api_page_category_info_get"];
         put?: never;
@@ -793,7 +793,7 @@ export interface components {
         };
         /**
          * PageCategoryOut
-         * @description Рубрика в справочнике и вложенным объектом у статьи.
+         * @description Рубрика вложенным объектом у статьи.
          */
         PageCategoryOut: {
             /**
@@ -811,6 +811,37 @@ export interface components {
              * @description Слаг
              */
             slug: string;
+            /**
+             * Path
+             * @description Адрес рубрики на сайте
+             */
+            readonly path: string;
+        };
+        /**
+         * PageCategoryTreeOut
+         * @description Рубрика в справочнике: дерево, подрубрики — внутри.
+         */
+        PageCategoryTreeOut: {
+            /**
+             * Id
+             * @description ID рубрики
+             */
+            id: number;
+            /**
+             * Name
+             * @description Название
+             */
+            name: string;
+            /**
+             * Slug
+             * @description Слаг
+             */
+            slug: string;
+            /**
+             * Child List
+             * @description Подрубрики в порядке из админки; нет — пустой список
+             */
+            child_list: components["schemas"]["PageCategoryTreeOut"][];
             /**
              * Path
              * @description Адрес рубрики на сайте
@@ -1891,7 +1922,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageCategoryOut"][];
+                    "application/json": components["schemas"]["PageCategoryTreeOut"][];
                 };
             };
             /** @description Ошибка валидации запроса */

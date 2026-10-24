@@ -19,6 +19,7 @@ class PageCategory(Model):
     date_add = fields.DatetimeField(auto_now_add=True)
     date_modified = fields.DatetimeField(auto_now=True)
     name = fields.CharField(max_length=200, default="")
+    parent = fields.ForeignKeyField("models.PageCategory", related_name="child_set", on_delete=fields.NO_ACTION, null=True)
     description = fields.TextField(default="")
     sort_order = fields.IntField(default=100)
     is_active = fields.BooleanField(default=True)

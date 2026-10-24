@@ -6,7 +6,7 @@ from core.pagination import ListOut, Pagination, paginate, sort_queryset
 from core.schemas import MessageOut
 from page import services
 from page.schemas import (
-    PageCategoryOut,
+    PageCategoryTreeOut,
     PageDetailOut,
     PageListFilter,
     PageListOut,
@@ -20,9 +20,11 @@ router = APIRouter()
 NOT_FOUND = {404: {"model": MessageOut, "description": "Не найдено, не опубликовано или скрыто"}}
 
 
-@router.get("/category/info", response_model=list[PageCategoryOut], summary="Справочник рубрик",
-            description="Без авторизации. Показываемые на сайте рубрики в порядке из админки — для меню "
-                        "и фильтра ленты. У каждой рубрики свой адрес в корне сайта: `path`.")
+@router.get("/category/info", response_model=list[PageCategoryTreeOut], summary="Справочник рубрик",
+            description="Без авторизации. Показываемые на сайте рубрики деревом — для меню и фильтра ленты: "
+                        "подрубрики — в `child_list`, на каждом уровне — в порядке из админки. Подрубрика "
+                        "скрытой рубрики — в корне. У каждой рубрики свой адрес в корне сайта: `path`. "
+                        "Фильтр ленты `category_slug` — только статьи самой рубрики, без подрубрик.")
 async def category_info():
     return await services.category_list()
 

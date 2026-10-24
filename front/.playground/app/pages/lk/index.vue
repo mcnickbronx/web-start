@@ -4,6 +4,7 @@ import type { components } from '#api-types'
 
 definePageMeta({ layout: 'lk', middleware: 'auth' })
 type Row = components['schemas']['PageListOut']
+type Category = components['schemas']['PageCategoryTreeOut']
 
 const api = useApi()
 const auth = useAuth()
@@ -22,7 +23,9 @@ const page = ref(1)
 const ROW = 10
 
 const { data: categoryList } = await useAsyncData('categories', async () => (await apiRequest(api.GET('/api/page/category/info'))).data ?? [])
-const categoryItemList = computed(() => [{ label: 'Все рубрики', value: 'all' }, ...(categoryList.value ?? []).map(item => ({ label: item.name, value: item.slug }))])
+// Справочник — деревом; в фильтре — все рубрики, подрубрика следом за своей
+const flatten = (list: Category[]): Category[] => list.flatMap(item => [item, ...flatten(item.child_list)])
+const categoryItemList = computed(() => [{ label: 'Все рубрики', value: 'all' }, ...flatten(categoryList.value ?? []).map(item => ({ label: item.name, value: item.slug }))])
 const sortItemList = [{ label: 'Сначала новые', value: '-date_published' }, { label: 'Сначала старые', value: 'date_published' }, { label: 'По заголовку', value: 'title' }]
 
 watch([searchDebounced, categorySlug, sort], () => (page.value = 1))
