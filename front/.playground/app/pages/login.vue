@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AuthFormField, FormSubmitEvent } from '#ui/types'
 
+useSeo({ title: 'Вход', isIndexed: false })
 const auth = useAuth()
 const route = useRoute()
 const form = useTemplateRef('form')

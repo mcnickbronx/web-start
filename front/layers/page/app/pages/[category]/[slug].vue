@@ -11,7 +11,7 @@ if (page.path !== route.path) {
   // С параметрами: по меткам рекламы (utm, yclid) заявка узнаёт, откуда пришёл посетитель
   await navigateTo({ path: page.path, query: route.query, hash: route.hash }, { redirectCode: 301 })
 }
-usePageSeo({
+useSeo({
   title: page.seo_title,
   description: page.seo_description,
   path: page.path,

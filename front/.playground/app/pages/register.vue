@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AuthFormField, FormSubmitEvent } from '#ui/types'
 
+useSeo({ title: 'Регистрация', isIndexed: false })
 const auth = useAuth()
 const toast = useToast()
 const form = useTemplateRef('form')

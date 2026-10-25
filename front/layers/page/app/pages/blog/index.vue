@@ -13,7 +13,7 @@ const feed = await usePageRequest(`page-list-${pageNumber}`, api => api.GET('/ap
 if (!feed.items.length) {
   throw createError({ statusCode: 404, message: 'Страница не найдена', fatal: true })
 }
-usePageSeo({ title: blogTitle, description: blogDescription, path: feedPath(route.path, pageNumber) })
+useSeo({ title: blogTitle, description: blogDescription, page: pageNumber })
 </script>
 
 <template>

@@ -2,6 +2,7 @@
 import type { AuthFormField, FormSubmitEvent } from '#ui/types'
 
 // Забыли пароль: email → код из письма и новый пароль → сразу вход
+useSeo({ title: 'Сброс пароля', isIndexed: false })
 const auth = useAuth()
 const toast = useToast()
 const form = useTemplateRef('form')

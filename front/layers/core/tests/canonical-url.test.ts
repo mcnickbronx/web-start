@@ -20,4 +20,12 @@ describe('canonicalUrl', () => {
   it('порт адреса сайта на месте', () => {
     expect(canonicalUrl('http://localhost:3000', '/login')).toBe('http://localhost:3000/login')
   })
+
+  it('номер страницы ленты — в адресе, со второй', () => {
+    expect(canonicalUrl('https://example.com', '/blog', 2)).toBe('https://example.com/blog?page=2')
+    expect(canonicalUrl('https://example.com', '/blog', 1)).toBe('https://example.com/blog')
+    expect(canonicalUrl('https://example.com', '/blog', 2.5)).toBe('https://example.com/blog')
+    expect(canonicalUrl('https://example.com', '/blog?utm_source=x&page=7', 3)).toBe('https://example.com/blog?page=3')
+    expect(new URL(canonicalUrl('https://example.com', '//evil.example/x', 2)).host).toBe('example.com')
+  })
 })

@@ -27,15 +27,15 @@ if (feed && pageNumber > 1 && !feed.items.length) {
   throw createError({ statusCode: 404, message: 'Страница не найдена', fatal: true })
 }
 if (category) {
-  usePageSeo({
+  useSeo({
     title: category.seo_title,
     description: category.seo_description,
-    path: feedPath(route.path, pageNumber),
+    page: pageNumber,
     isIndexed: category.is_indexed,
   })
 }
 else if (page) {
-  usePageSeo({
+  useSeo({
     title: page.seo_title,
     description: page.seo_description,
     path: page.path,
