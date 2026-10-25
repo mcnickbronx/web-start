@@ -219,8 +219,8 @@ python manage.py test --parallel auto --keepdb   # в несколько про�
 Своего Postgres нет — в Docker, тот же образ и та же версия, что в CI (`.github/workflows/back.yml`):
 
 ```bash
-docker run -d --name web-start-pg -p 127.0.0.1:5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust mirror.gcr.io/library/postgres:17
-until docker exec web-start-pg pg_isready -q -h 127.0.0.1 -U postgres; do sleep 1; done   # база встаёт несколько секунд
+docker run -d --name web-start-pg -p 127.0.0.1:5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust mirror.gcr.io/library/postgres:17 &&
+  until docker exec web-start-pg pg_isready -q -h 127.0.0.1 -U postgres; do sleep 1; done   # база встаёт несколько секунд
 docker exec web-start-pg createdb -U postgres project   # база для migrate и runserver, имя — из DEV_DB_NAME
 ```
 
@@ -236,7 +236,7 @@ docker rm -fv web-start-pg                              # удалить вме�
 заводит сам, база из `DEV_DB_NAME` им не нужна. `trust` пускает в базу без пароля, поэтому перед портом —
 `127.0.0.1:`: так он открыт только самому ноутбуку. Без адреса Docker откроет порт на всех сетях,
 и в кафе или в офисе к базе подключится любой из той же сети. Порт 5432 занят своим Postgres —
-`-p 127.0.0.1:5433:5432` и `DEV_DB_PORT=5433`.
+`-p 127.0.0.1:5433:5432` и `DEV_DB_PORT=5433`; контейнер от неудачного запуска сначала убрать: `docker rm web-start-pg`.
 
 ## Шпаргалка
 
