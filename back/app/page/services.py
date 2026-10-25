@@ -17,7 +17,7 @@ from tortoise.expressions import Q, Subquery
 
 from core import cache
 from core.image import to_webp
-from core.slug import slugify_text
+from core.slug import unique_slug
 from core.tree import build_tree
 from page import conf, models, models_async
 from page.markdown import excerpt_from_html, render_markdown
@@ -71,12 +71,10 @@ def clean_slug(model: type[models.PageCategory | models.Page], slug: str, source
             raise ValidationError(f"Адрес /{slug} уже занят рубрикой или страницей")
         return slug
 
-    base = slugify_text(source) or "page"
-    candidate, counter = base, 1
-    while candidate in SLUG_RESERVED_LIST or _is_slug_taken(candidate, model, pk):
-        counter += 1
-        candidate = f"{base}-{counter}"
-    return candidate
+    return unique_slug(
+        source, lambda candidate: candidate in SLUG_RESERVED_LIST or _is_slug_taken(candidate, model, pk),
+        fallback="page", length_max=model._meta.get_field("slug").max_length,
+    )
 
 
 # --- Страница (админка) ----------------------------------------------------------------
