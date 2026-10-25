@@ -1,5 +1,5 @@
 # Полезные команды
-Шпаргалка · 21.10.2026
+Шпаргалка · 25.10.2026
 
 Команды по темам. Подробности про деплой — в [deploy.md](deploy.md), про устройство
 проекта — в [architecture.md](architecture.md).
@@ -215,6 +215,22 @@ python manage.py test --parallel auto --keepdb   # в несколько про�
 `--noinput` — удалить молча. `--parallel` заводит по копии тестовой базы на процесс
 (`test_<база>_1`, `_2`…). Запустить только упавшие в прошлый раз, как `pytest --lf`, Django не умеет:
 имя упавшего теста — в выводе, его и передать.
+
+Своего Postgres нет — в Docker, тот же образ и та же версия, что в CI (`.github/workflows/back.yml`):
+
+```bash
+docker run -d --name web-start-pg -p 127.0.0.1:5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust mirror.gcr.io/library/postgres:17
+docker exec web-start-pg createdb -U postgres project   # база для migrate и runserver, имя — из DEV_DB_NAME
+docker stop web-start-pg                                # остановить; docker start web-start-pg — снова, базы на месте
+docker rm -fv web-start-pg                              # удалить вместе с базами (без -v они останутся на диске безымянным томом)
+```
+
+`.env` из `.env.txt` подходит как есть: `DEV=True`, `DEV_DB_USER=postgres`, `DEV_DB_PASSWORD=` пустой,
+`DEV_DB_HOST=localhost`, `DEV_DB_PORT=5432`. Тестам хватает первой строки: `test_<база>` Django
+заводит сам, база из `DEV_DB_NAME` им не нужна. `trust` пускает в базу без пароля, поэтому перед портом —
+`127.0.0.1:`: так он открыт только самому ноутбуку. Без адреса Docker откроет порт на всех сетях,
+и в кафе или в офисе к базе подключится любой из той же сети. Порт 5432 занят своим Postgres —
+`-p 127.0.0.1:5433:5432` и `DEV_DB_PORT=5433`.
 
 ## Шпаргалка
 
