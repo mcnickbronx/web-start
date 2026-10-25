@@ -14,7 +14,7 @@ name: ${COMPOSE_PROJECT_NAME}
 x-app: &app
   # Приложение не от root и без особых прав Linux
   extends: { file: /srv/infra/compose/base.yml, service: hardened-strict }
-  image: ${DEPLOY_IMAGE}             # ghcr.io/<владелец>/web-start-back:<хеш коммита> (сайт) или :dev, собирает CI
+  image: ${DEPLOY_IMAGE}             # ghcr.io/<владелец>/web-start-back:<версия или хеш коммита> (сайт) или :dev, собирает CI
   user: "1000:1000"
   # Всё приложения, и доступ к базе тоже: его кладёт в .env администратор (docs/deploy.md)
   env_file:

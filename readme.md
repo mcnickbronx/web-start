@@ -91,8 +91,8 @@
 - **Фронт сайта** подключает движок одной строкой в `nuxt.config.ts`:
   `extends: [['gh:mcnickbronx/web-start/front#v2.4.0', { install: true }]]`.
   Подробно — [front/readme.md](front/readme.md#сайт-на-движке).
-- **Бэкенд сайта** — образ того же коммита: `DEPLOY_IMAGE=…/web-start-back:<хеш>` в `.env` сервера.
-  Сменили хеш — сервер выложит новую версию сам. Подробно — [back/docs/deploy.md](back/docs/deploy.md#выкладка).
+- **Бэкенд сайта** — образ той же версии: `DEPLOY_IMAGE=…/web-start-back:<версия>` в `.env` сервера
+  (образы с именем версии — с 3.0.0, у прежних — полный хеш коммита). Сменили версию — сервер выложит её сам. Подробно — [back/docs/deploy.md](back/docs/deploy.md#выкладка).
 - **Новый сайт** — свой репозиторий из шаблона [web-site-starter](https://github.com/mcnickbronx/web-site-starter)
   (заготовка для фронтенд-разработчика сайта) и бэкенд на своём сервере: готовый сервер —
   [infra](https://github.com/mcnickbronx/infra), что нужно от другого — [back/docs/deploy.md](back/docs/deploy.md#что-нужно-от-сервера).

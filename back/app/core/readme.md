@@ -306,15 +306,18 @@ class Command(BaseCommand):
 Слаг из текста — `slugify_text(title)` из `core.slug`: свой транслит кириллицы, латиница, цифры и дефис.
 Штатный `prepopulated_fields` админки транслитерирует иначе (ё → yo, щ → sh) — адреса модулей разошлись бы.
 Свободный адрес — `unique_slug(title, is_taken, fallback="product")`: занят — `-2`, `-3`…, и вместе с суффиксом
-слаг не длиннее предела поля (`length_max`, по умолчанию 200): иначе вторую запись с длинным названием база
-не сохранила бы. Что значит «занят» — решает модуль функцией `is_taken`: своя таблица, соседние, служебные адреса.
+слаг не длиннее предела поля (`length_max`, по умолчанию 200; у `SlugField()` без `max_length` предел 50 —
+передайте свой): иначе вторую запись с длинным названием база не сохранила бы. Что значит «занят» — решает модуль функцией `is_taken`: своя таблица, соседние, служебные адреса.
 `is_taken` — обычная функция на Django ORM, не `async`: слаг собирает админка при сохранении. Образец — `clean_slug`
 в `page/services.py`: страницы и рубрики делят корень сайта, поэтому проверяются обе таблицы и служебные `/admin`, `/api`.
 
 ```python
 from core.slug import unique_slug
 
-product.slug = unique_slug(product.name, lambda slug: Product.objects.filter(slug=slug).exclude(pk=product.pk).exists(), fallback="product")
+product.slug = unique_slug(
+    product.name, lambda slug: Product.objects.filter(slug=slug).exclude(pk=product.pk).exists(),
+    fallback="product", length_max=Product._meta.get_field("slug").max_length,
+)
 ```
 
 ## Дерево

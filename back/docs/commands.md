@@ -220,13 +220,19 @@ python manage.py test --parallel auto --keepdb   # в несколько про�
 
 ```bash
 docker run -d --name web-start-pg -p 127.0.0.1:5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust mirror.gcr.io/library/postgres:17
+until docker exec web-start-pg pg_isready -q -h 127.0.0.1 -U postgres; do sleep 1; done   # база встаёт несколько секунд
 docker exec web-start-pg createdb -U postgres project   # база для migrate и runserver, имя — из DEV_DB_NAME
+```
+
+Остановить, запустить снова, удалить — по одной команде, не блоком:
+
+```bash
 docker stop web-start-pg                                # остановить; docker start web-start-pg — снова, базы на месте
 docker rm -fv web-start-pg                              # удалить вместе с базами (без -v они останутся на диске безымянным томом)
 ```
 
 `.env` из `.env.txt` подходит как есть: `DEV=True`, `DEV_DB_USER=postgres`, `DEV_DB_PASSWORD=` пустой,
-`DEV_DB_HOST=localhost`, `DEV_DB_PORT=5432`. Тестам хватает первой строки: `test_<база>` Django
+`DEV_DB_HOST=localhost`, `DEV_DB_PORT=5432`. Тестам хватает первых двух строк: `test_<база>` Django
 заводит сам, база из `DEV_DB_NAME` им не нужна. `trust` пускает в базу без пароля, поэтому перед портом —
 `127.0.0.1:`: так он открыт только самому ноутбуку. Без адреса Docker откроет порт на всех сетях,
 и в кафе или в офисе к базе подключится любой из той же сети. Порт 5432 занят своим Postgres —
