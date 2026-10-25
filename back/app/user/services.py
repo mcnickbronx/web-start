@@ -134,10 +134,9 @@ async def register(email: str, first_name: str, last_name: str) -> CustomUser:
         # регистрация не трогает
         if user.is_confirmed:
             raise email_taken
-        # Ждёт кода: новый код (в ту же минуту — 406) и имя из этого запроса. Пароля у него нет —
-        # переписать нечего, а владелец адреса, которого опередили, регистрируется как обычно
+        # Ждёт кода: новый код (в ту же минуту — 406). Имя остаётся от первой регистрации: повтор с чужим
+        # адресом своё имя владельцу не впишет; владелец правит имя в профиле
         await issue_code(user, "activation")
-        await CustomUser.filter(id=user.id, is_confirmed=False).update(first_name=first_name, last_name=last_name)
         return user
 
     try:

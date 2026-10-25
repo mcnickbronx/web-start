@@ -114,16 +114,31 @@ class AuthTest(ApiTestCase):
         self.assertEqual(self.login("new@example.com").status_code, 200)
 
     def test_register_again_while_waiting(self):
-        """Адрес ждёт кода — повторная регистрация шлёт новый код и берёт имя из неё, а не 422:
-        владелец адреса, которого опередили, регистрируется как обычно."""
-        self.assertEqual(self.register(first_name="Чужой").status_code, 200)
-        self.assertEqual(self.register(first_name="Анна").status_code, 406)  # в ту же минуту
+        """Адрес ждёт кода — повторная регистрация шлёт новый код, а не 422, и имя не меняет: чужой, повторив
+        регистрацию с адресом владельца, своё имя в его аккаунт не впишет. Обратный случай — кто первым
+        зарегистрировал чужой адрес, его имя и останется, пока владелец не поправит в профиле
+        (test_squatter_name_fixed_in_profile)."""
+        self.assertEqual(self.register(first_name="Анна", last_name="Смирнова").status_code, 200)
+        self.assertEqual(self.register(first_name="Хакер").status_code, 406)  # в ту же минуту
         models.CustomUser.objects.update(confirmation_code_created_at=timezone.now() - conf.CONFIRMATION_CODE_RESEND_INTERVAL)
-        self.assertEqual(self.register(first_name="Анна").status_code, 200)
+        self.assertEqual(self.register(first_name="Хакер", last_name="Хакеров").status_code, 200)
         self.assertEqual(len(mail.outbox), 2)
         user = models.CustomUser.objects.get(email="new@example.com")
-        self.assertEqual(user.first_name, "Анна")
+        self.assertEqual((user.first_name, user.last_name), ("Анна", "Смирнова"))
         self.assertEqual(self.activate(user.confirmation_code).status_code, 200)
+        user = models.CustomUser.objects.get(email="new@example.com")
+        self.assertEqual((user.first_name, user.last_name), ("Анна", "Смирнова"))
+
+    def test_squatter_name_fixed_in_profile(self):
+        """Чужой зарегистрировал адрес первым — после активации у владельца его имя; владелец правит его в профиле."""
+        self.register(first_name="Хакер")
+        response = self.activate(models.CustomUser.objects.get(email="new@example.com").confirmation_code)
+        access = {"Authorization": f"Bearer {response.json()['access']}"}
+        response = self.api.patch("/api/user/me", json={"first_name": "Анна", "last_name": "Смирнова"}, headers=access)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual((response.json()["first_name"], response.json()["last_name"]), ("Анна", "Смирнова"))
+        user = models.CustomUser.objects.get(email="new@example.com")
+        self.assertEqual((user.first_name, user.last_name), ("Анна", "Смирнова"))
 
     def test_disabled_account_untouched(self):
         """Выключенный в админке аккаунт регистрация, повтор кода и активация не трогают — даже с верным кодом:

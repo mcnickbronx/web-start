@@ -27,7 +27,7 @@ BUSINESS = {406: {"model": MessageOut, "description": "Сообщение пол
 @router.post("/register", response_model=MessageOut, summary="Регистрация", responses=BUSINESS,
              description="Создаёт неактивного пользователя без пароля и отправляет код подтверждения на почту. "
                          "Дальше — /activate: код и пароль. Код по умолчанию живёт 30 минут. Адрес уже ждёт подтверждения — "
-                         "новый код (по умолчанию не чаще раза в минуту, раньше — 406) и имя из этого запроса.")
+                         "новый код (по умолчанию не чаще раза в минуту, раньше — 406); имя остаётся от первой регистрации.")
 async def register(data: RegisterIn):
     await services.register(data.email, data.first_name, data.last_name)
     return {"message": "Код подтверждения отправлен на почту"}
