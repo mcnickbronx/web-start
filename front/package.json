@@ -6,7 +6,7 @@
     "dev": "nuxt dev .playground",
     "build": "nuxt build .playground",
     "preview": "nuxt preview .playground",
-    "typecheck": "nuxt typecheck .playground",
+    "typecheck": "nuxt typecheck .playground && nuxt typecheck .site",
     "test": "vitest run",
     "api:types": "../back/.venv/bin/python ../back/app/manage.py export_openapi | openapi-typescript --default-non-nullable=false -o layers/core/app/types/api.d.ts"
   },
