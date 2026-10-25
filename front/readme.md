@@ -96,7 +96,12 @@ export default defineNuxtConfig({
 1. Прочитать в CHANGELOG записи от своей версии до новой: ручные шаги, миграции.
 2. Бэкенд сайта — первым: «Боевой» в разделе [«Выкладка»](../back/docs/deploy.md#выкладка) бэкенда.
 3. Фронт: тег в `extends`, версии `nuxt`, `vue`, `vue-router` — как в `front/package.json` движка
-   этого тега (забыл — сборка предупредит), `npm install`, `npm run build`, выложить.
+   этого тега (забыл — сборка предупредит), `npm install`, `npm run typecheck`, `npm run build`, выложить.
+   Проверка типов — до сборки: функцию, которую движок переименовал или убрал, `npm run build` пропускает,
+   и страница, где она вызвана, отвечает 500, а `npm run typecheck` называет файл и строку сайта —
+   `SiteRequestForm.vue(6,14): error TS2304: Cannot find name 'useSiteForm'`. Поэтому и в `Dockerfile` сайта —
+   `RUN npm run typecheck` перед `RUN npm run build`: с такой ошибкой CI сайта не соберёт образ,
+   и на сервере останется прежний сайт.
 
 Между выпусками — полный хеш коммита `main` вместо тега (`#bfddda7f…`), но не ветка: она меняется.
 
