@@ -74,11 +74,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0                        # история с тегами — для версии ниже
-      # версия от последнего тега: на теге — v3.0.0, между выпусками — v2.4.0-64-gfe590f6
-      # (64 коммита после v2.4.0); тегов нет — пусто
+      # версия от последнего тега выпуска: на теге — v3.0.0, между выпусками — v2.4.0-64-gfe590f6
+      # (64 коммита после v2.4.0); теги вида v3.0 и v3.0.0-rc1 не в счёт; тегов нет — пусто
       - name: Версия
         id: version
-        run: echo "version=$(git describe --tags --match 'v[0-9]*' 2>/dev/null)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(git describe --tags --match 'v[0-9]*.[0-9]*.[0-9]*' --exclude '*-*' 2>/dev/null)" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
         with:
           # сборщик — с зеркала Google, не с Docker Hub: у того лимит скачиваний без входа
