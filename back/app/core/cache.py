@@ -12,10 +12,15 @@
 import asyncio
 import functools
 import logging
+import math
+import time
 from collections.abc import Awaitable, Callable
+from threading import Lock
 from typing import Any
 
 from django.core.cache import caches
+from django.core.cache.backends.dummy import DummyCache
+from django.core.cache.backends.redis import RedisCache
 from django.core.signals import setting_changed
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
@@ -23,6 +28,17 @@ from django.db.models.signals import post_delete, post_save
 logger = logging.getLogger(__name__)
 
 _MISSING = object()
+_hit_lock = Lock()
+_hit_memory: dict[str, tuple[int, float]] = {}
+# INCR Django делает EXISTS отдельно: ключ мог истечь перед INCR и создаться без срока.
+# Один скрипт считает и задаёт срок атомарно; обычный запрос окно не продлевает.
+_HIT_SCRIPT = """
+local count = redis.call('INCR', KEYS[1])
+if count == 1 or redis.call('TTL', KEYS[1]) < 0 then
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return count
+"""
 
 
 @functools.cache
@@ -38,6 +54,33 @@ def reset_backend(setting: str, **kwargs) -> None:
 
 
 setting_changed.connect(reset_backend)
+
+
+def _hit(key: str, limit: int, period: int) -> bool:
+    try:
+        store = backend()
+        if not isinstance(store, DummyCache):
+            if not isinstance(store, RedisCache):
+                raise TypeError("Счётчик требует RedisCache")
+            redis_key = store.make_and_validate_key(key)
+            client = store._cache.get_client(redis_key, write=True)
+            return client.eval(_HIT_SCRIPT, 1, redis_key, math.ceil(period)) <= limit
+    except Exception:
+        logger.warning("Счётчик Redis недоступен — лимит в памяти процесса")
+    with _hit_lock:
+        now = time.monotonic()
+        for expired in [item for item, (_, end) in _hit_memory.items() if end <= now]:
+            del _hit_memory[expired]
+        count, end = _hit_memory.get(key, (0, now + period))
+        _hit_memory[key] = (count + 1, end)
+        return count < limit
+
+
+async def hit(key: str, limit: int, period: int) -> bool:
+    """Пропустить не больше limit вызовов за period секунд от первого; без Redis — память процесса."""
+    if limit <= 0 or period <= 0:
+        raise ValueError("Счётчик: limit и period должны быть больше нуля")
+    return await asyncio.to_thread(_hit, key, limit, period)
 
 
 async def get_or_set(key: str, fetch: Callable[[], Awaitable[Any]], ttl: int) -> Any:
