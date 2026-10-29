@@ -45,6 +45,15 @@ def completion(content='{"count":2}', **kwargs):
             "usage": {"total_tokens": 9, "secret": TEXT_SECRET}}
 
 
+def rejecting_schema(error_type):
+    class RejectingAnswer(Answer):
+        @field_validator("count")
+        @classmethod
+        def reject(cls, value):
+            raise error_type(VALIDATOR_SECRET)
+    return RejectingAnswer
+
+
 class ChatTest(SimpleTestCase):
     def setUp(self):
         self.responses, self.requests = [], []
@@ -164,6 +173,48 @@ class ChatTest(SimpleTestCase):
                 before = len(self.requests)
                 self.assert_private(self.error_text(user_id=None))
                 self.assertEqual(len(self.requests), before + 1)
+
+    def test_unexpected_validator_error_has_private_traceback(self):
+        for error_type in [TypeError, RuntimeError]:
+            with self.subTest(error_type=error_type):
+                before = len(self.requests)
+                try:
+                    self.chat(schema=rejecting_schema(error_type), user_id=None)
+                except http.ExternalServiceError as error:
+                    self.assert_private("".join(traceback.format_exception(error)))
+                    self.assertIsNone(error.__cause__)
+                    self.assertTrue(error.__suppress_context__)
+                else:
+                    self.fail("Ожидалась безопасная ошибка выполнения схемы")
+                self.assertEqual(len(self.requests), before + 1)
+
+    def test_unexpected_validator_error_uses_safe_api_handler(self):
+        for error_type in [TypeError, RuntimeError]:
+            with self.subTest(error_type=error_type):
+                schema = rejecting_schema(error_type)
+                app = FastAPI()
+                register_error_handlers(app)
+
+                @app.get("/example")
+                async def example():
+                    try:
+                        return await ai.chat([], service="Пример", user_id=None, schema=schema)
+                    finally:
+                        await http.close()
+
+                with self.assertLogs("core.errors", "WARNING") as logs:
+                    with TestClient(app, raise_server_exceptions=False) as client:
+                        response = client.get("/example")
+                self.assertEqual(response.status_code, 502)
+                self.assertEqual(response.json(), {"message": "Сервис «Пример» недоступен. Попробуйте позже"})
+                self.assert_private(response.text + "\n".join(logs.output))
+                self.assertEqual([record.levelname for record in logs.records], ["WARNING"])
+                self.assertIsNone(logs.records[0].exc_info)
+
+    def test_validator_cancellation_is_not_a_schema_error(self):
+        with self.assertRaises(asyncio.CancelledError):
+            self.chat(schema=rejecting_schema(asyncio.CancelledError), user_id=None)
+        self.assertEqual(len(self.requests), 1)
 
     def test_http_and_network_errors_are_private(self):
         for status, hint in [(400, "400"), (401, "AI_API_KEY"), (403, "доступ"), (404, "AI_MODEL")]:

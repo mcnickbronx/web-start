@@ -98,6 +98,10 @@ async def chat(messages: list[dict], *, service: str, user_id: int | None,
                 payload["messages"] += [{"role": "assistant", "content": content},
                                         {"role": "user", "content": "Исправь JSON по схеме. Ошибочные поля: " + (", ".join(fields) or "корень JSON")}]
                 continue
+            except Exception:
+                # Свой валидатор может бросить не ValidationError и включить данные в текст ошибки.
+                # BaseException (отмена/завершение процесса) должен пройти наружу.
+                raise _error(service, detail="не удалось проверить ответ ИИ по JSON-схеме") from None
         else:
             result = content
         # usage приходит от внешнего сервиса: в журнал разрешены только числовые счётчики.
