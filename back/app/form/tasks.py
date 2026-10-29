@@ -2,6 +2,7 @@ import logging
 
 from django.utils import timezone
 
+from core import telegram
 from core.broker import broker
 from core.mailer import send_mail
 from core.user_agent import describe_user_agent
@@ -39,6 +40,10 @@ def tech_info_list(form_request) -> list[tuple[str, str]]:
 def recipient_list(form_type) -> list[str]:
     """Кому отправлять письма о заявках формы. Пусто — заявки только в админке."""
     return [email.strip() for email in form_type.email_to.split(",") if email.strip()]
+
+
+def telegram_chat_list(form_type) -> list[str]:
+    return [chat.strip() for chat in form_type.telegram_chat.split(",") if chat.strip()]
 
 
 async def _set_email_status(form_request: models_async.FormRequest, status: str, error: str = "") -> None:
@@ -80,3 +85,32 @@ async def send_request_email(form_request_id: int) -> None:
         await _set_email_status(form_request, EmailStatus.ERROR, str(exc)[:4000])
         return
     await _set_email_status(form_request, EmailStatus.SENT)
+
+
+@broker.task
+async def send_request_telegram(form_request_id: int) -> None:
+    """Необязательное уведомление о сохранённой заявке; сбой одного чата не мешает остальным."""
+    if not telegram.TOKEN:
+        return
+    form_request = await models_async.FormRequest.get_or_none(id=form_request_id).select_related("form_type")
+    if form_request is None or form_request.status == models.FormRequest.Status.SPAM:
+        return
+    form_type = form_request.form_type
+    chat_list = telegram_chat_list(form_type)
+    if not chat_list:
+        return
+    file_count = await models_async.FormFile.filter(form_request_id=form_request.id).count()
+    channel = models.FormRequest.Channel(form_request.channel).label if form_request.channel else "—"
+    line_list = [f"Заявка №{form_request.id}", f"Форма: {form_type.name}", f"Канал: {channel}", f"Файлов: {file_count}"]
+    if form_type.is_telegram_contacts:
+        line_list.extend(f"{label}: {value}" for label, value in [
+            ("Имя", form_request.name), ("Телефон", form_request.phone),
+            ("Email", form_request.email), ("Сообщение", form_request.message),
+        ] if value)
+        line_list.extend(f"{key}: {format_value(value)}" for key, value in form_request.data.items())
+    text = "\n".join(line_list)
+    for chat in chat_list:
+        try:
+            await telegram.send_message(chat, text)
+        except Exception:
+            logger.warning("Заявка №%s: уведомление Telegram не отправлено", form_request.id)

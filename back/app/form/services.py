@@ -20,12 +20,12 @@ from fastapi import HTTPException
 from tortoise.exceptions import IntegrityError
 from tortoise.transactions import in_transaction
 
-from core import upload
+from core import telegram, upload
 from core.bridge import with_sync
 from core.errors import field_error
 from form import captcha, conf, models, models_async
 from form.schemas import FormRequestIn
-from form.tasks import recipient_list, send_request_email
+from form.tasks import recipient_list, send_request_email, send_request_telegram, telegram_chat_list
 from form.visit import detect_channel, parse_utm
 from user import models_async as user_models_async
 
@@ -210,6 +210,11 @@ async def create_request(data: FormRequestIn, user: user_models_async.CustomUser
     logger.info(f"Заявка №{form_request.id} ({form_type.code}) с сайта")
     # Письмо некритично: заявка уже сохранена, посетитель получает обычный ответ
     await _queue_email(form_request.id)
+    if telegram.TOKEN and telegram_chat_list(form_type):
+        try:
+            await send_request_telegram.kiq(form_request.id)
+        except Exception:
+            logger.warning("Заявка №%s: уведомление Telegram не поставлено в очередь", form_request.id)
 
 
 async def _queue_email(form_request_id: int) -> bool:

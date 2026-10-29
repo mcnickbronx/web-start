@@ -46,6 +46,7 @@
 | Закрытый файл: отдать из API только тому, кому можно | `core`; первыми — файлы заявок | есть | [ядро](back/app/core/readme.md#файл-от-посетителя), [модуль](back/app/form/readme.md#файлы) |
 | Картинка → webp при загрузке: ширина до предела, поворот по EXIF | `core`; первыми — картинки страниц | есть | [ядро](back/app/core/readme.md#картинки) |
 | Письма по шаблону | `core` | есть | [ядро](back/app/core/readme.md#письма) |
+| Уведомления Telegram | `core`, `form` | есть | [ядро](back/app/core/readme.md#telegram), [заявки](back/app/form/readme.md#telegram) |
 | Выгрузка списка админки в Excel | `core` | есть | [ядро](back/app/core/readme.md#выгрузка-в-excel) |
 | История изменений: кто, когда и что поменял | `core`; первыми — заявки | есть | [ядро](back/app/core/readme.md#история-изменений) |
 | Фоновые задачи и задачи по расписанию | `core`, `project` | есть | [ядро](back/app/core/readme.md#фоновые-задачи) |

@@ -56,6 +56,7 @@ class FormTypeAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {"fields": ["name", "code", "is_active"]}),
         ("Письмо", {"fields": ["email_to", "email_subject", "is_email_tech_info"]}),
+        ("Telegram", {"fields": ["telegram_chat", "is_telegram_contacts"]}),
         ("Обязательные поля", {"fields": ["is_contact_required", "is_name_required", "is_phone_required", "is_email_required", "is_message_required"]}),
         ("Защита и файлы", {"fields": ["is_captcha", "is_trap", "is_file", "file_count_max"]}),
         ("Даты", {"fields": ["date_add", "date_modified"]}),

@@ -24,7 +24,9 @@ class FormType(models.Model):
 
     name = models.CharField("Название", max_length=200)
     code = models.SlugField("Код", max_length=100, unique=True, help_text="По нему сайт запрашивает форму. Менять — только вместе с сайтом")
-    email_to = models.CharField("Кому отправлять", max_length=500, blank=True, help_text="Адреса через запятую. Пусто — заявки только в админке")
+    email_to = models.CharField("Кому отправлять", max_length=500, blank=True, help_text="Адреса через запятую. Пусто — письмо не отправляется")
+    telegram_chat = models.CharField("Чаты Telegram", max_length=500, blank=True, db_default="", help_text="ID чатов через запятую. Пусто — уведомления Telegram выключены")
+    is_telegram_contacts = models.BooleanField("Контакты в Telegram", default=False, db_default=False, help_text="Отправлять имя, телефон, email, сообщение и дополнительные поля во внешний сервис Telegram. IP, браузер и Метрика не отправляются никогда")
     email_subject = models.CharField("Тема письма", max_length=250, blank=True, help_text="Пусто — название формы")
     is_email_tech_info = models.BooleanField("Техническая информация в письме", default=False, help_text="Время заявки до секунды, откуда пришёл посетитель, метки, ID в Метрике, IP и браузер. IP и браузер — персональные данные: включать осознанно")
     is_contact_required = models.BooleanField("Нужен телефон или email", default=True, help_text="Хотя бы одно из двух — чтобы было куда ответить")

@@ -17,6 +17,8 @@ class FormType(Model):
     name = fields.CharField(max_length=200, default="")
     code = fields.CharField(max_length=100, unique=True)
     email_to = fields.CharField(max_length=500, default="")
+    telegram_chat = fields.CharField(max_length=500, default="")
+    is_telegram_contacts = fields.BooleanField(default=False)
     email_subject = fields.CharField(max_length=250, default="")
     is_email_tech_info = fields.BooleanField(default=False)
     is_contact_required = fields.BooleanField(default=True)
