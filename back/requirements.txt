@@ -1,5 +1,6 @@
 # Django: модели, миграции, админка; настройки из .env
 django==6.1.2
+asgiref==3.12.1
 django-environ==0.14.0
 # Админка: фильтр списка с подсказками по связи (заявки → «Форма»), сворачиваемая панель фильтров,
 # курсор в поиске подсказок
@@ -11,6 +12,8 @@ psycopg[binary]==3.3.5
 
 # API: FastAPI, Tortoise, JWT
 fastapi==0.141.1
+pydantic==2.14.1
+starlette==1.9.0
 uvicorn[standard]==0.53.0
 tortoise-orm[asyncpg]==1.1.9
 pyjwt==2.15.1
@@ -20,14 +23,16 @@ taskiq==0.12.6
 taskiq-redis==1.2.3
 redis==8.1.0
 
-# Модуль page: Markdown → HTML, очистка HTML, ужатие картинок
-markdown-it-py[linkify]==4.2.0
-nh3==0.3.7
+# Ядро: внешние HTTP-вызовы (core/http.py), обработка картинок (core/image.py)
+aiohttp==3.14.4
 Pillow==13.0.0
 
-# Модуль form: загрузка файлов в API, проверка Яндекс SmartCaptcha
+# Модуль page: Markdown → HTML, очистка HTML
+markdown-it-py[linkify]==4.2.0
+nh3==0.3.7
+
+# Модуль form: загрузка файлов в API
 python-multipart==0.0.32
-aiohttp==3.14.4
 
 # Тесты: клиент FastAPI (python manage.py test)
 httpx2==2.13.1

@@ -31,6 +31,9 @@ A backend module and a frontend layer with the same name are a pair (`page` ↔ 
 - `log` — application log in the database, viewable in the admin.
 - `live` — live events in the browser over WebSocket: the server notifies a signed-in user's open tabs; frontend layer `live` — `useLive().on(type, handler)`.
 
+`user` and `log` are part of the current project foundation: authentication and logging
+settings use them. `page`, `form` and `live` are optional.
+
 What each module and layer solves, what is in progress and what is planned — the module map in
 [readme.md](readme.md#из-чего-собирается-проект) (Russian).
 
