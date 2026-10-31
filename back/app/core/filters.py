@@ -11,14 +11,16 @@
 В Swagger каждое поле — отдельным параметром с описанием. Неверное значение — 422 у поля,
 неизвестный параметр — тоже 422: опечатка в имени фильтра не должна молча отдавать весь список.
 """
-import inspect
+from collections.abc import AsyncIterator
+from contextvars import ContextVar
 from typing import Annotated, Any, ClassVar
 
-from fastapi import Query, Request
-from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel, Field, ValidationError
+from fastapi import Depends, Query, Request
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 from tortoise.expressions import Q
 from tortoise.queryset import QuerySet
+
+_known_query: ContextVar[frozenset[str]] = ContextVar("filter_known_query", default=frozenset())
 
 
 def FilterField(q: str | list[str], description: str = "", **kwargs: Any) -> Any:
@@ -30,28 +32,29 @@ def FilterField(q: str | list[str], description: str = "", **kwargs: Any) -> Any
 class FilterSchema(BaseModel):
     """Основа фильтра списка. Поля — через FilterField, в эндпоинт — `Depends(ИмяФильтра.query)`."""
 
-    query: ClassVar[Any]  # зависимость FastAPI, своя у каждого подкласса — собирается ниже
+    model_config = ConfigDict(extra="forbid")
+
+    query: ClassVar[Any]  # своя Query-модель у каждого подкласса
 
     @classmethod
     def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
-        """Зависимость с полями фильтра в сигнатуре: FastAPI проверит каждое и покажет в Swagger."""
+        """FastAPI сам разбирает поля модели, ограничения, списки и валидаторы."""
         super().__pydantic_init_subclass__(**kwargs)
-        parameter_list = [inspect.Parameter("request", inspect.Parameter.KEYWORD_ONLY, annotation=Request)]
-        parameter_list += [
-            inspect.Parameter(name, inspect.Parameter.KEYWORD_ONLY, default=None,
-                              annotation=Annotated[field.annotation, *field.metadata, Query(description=field.description)])
-            for name, field in cls.model_fields.items()
-        ]
 
-        async def query(request: Request, **values: Any) -> FilterSchema:
-            check_unknown_params(request)
-            try:
-                return cls(**values)
-            except ValidationError as error:  # проверки всей схемы (свои валидаторы) — тоже 422, а не 500
-                raise RequestValidationError([{**item, "loc": ("query", *item["loc"])} for item in error.errors()]) from None
+        async def query(values: Annotated[cls, Query()], _context: Annotated[None, Depends(_query_context, scope="function")]) -> FilterSchema:
+            return values
 
-        query.__signature__ = inspect.Signature(parameter_list)
         cls.query = query
+
+    @model_validator(mode="before")
+    @classmethod
+    def allow_sibling_query(cls, values: Any) -> Any:
+        # Query-модель получает всю строку запроса. Чужие объявленные поля проверят их
+        # собственные зависимости; остальные остаются для штатного extra="forbid".
+        if isinstance(values, dict):
+            sibling_names = _known_query.get() - _model_query_names(cls)
+            return {name: value for name, value in values.items() if name not in sibling_names}
+        return values
 
     def apply(self, queryset: QuerySet) -> QuerySet:
         """Запрос с заданными полями. Не задано или пустая строка — по этому полю не фильтруем."""
@@ -65,20 +68,43 @@ class FilterSchema(BaseModel):
         return queryset
 
 
-def check_unknown_params(request: Request) -> None:
-    """Параметр, которого эндпоинт не объявил (ни фильтр, ни page, row, sort), — 422."""
-    known = _query_names(request.scope["route"].dependant)
-    unknown = [name for name in request.query_params if name not in known]
-    if unknown:
-        raise RequestValidationError([
-            {"type": "extra_forbidden", "loc": ("query", name), "msg": "Неизвестный параметр", "input": request.query_params[name]}
-            for name in unknown
-        ])
+async def _query_context(request: Request) -> AsyncIterator[None]:
+    """Имена соседних query-полей принадлежат только текущему запросу."""
+    token = _known_query.set(frozenset(_query_names(request.scope["route"].dependant)))
+    try:
+        yield
+    finally:
+        _known_query.reset(token)
+
+
+def _model_query_names(model: type[BaseModel]) -> set[str]:
+    names = set()
+    for name, field in model.model_fields.items():
+        if model.model_config.get("validate_by_alias") is not False:
+            names |= _field_query_names(field, name)
+        if model.model_config.get("validate_by_alias") is False or model.model_config.get("validate_by_name") or model.model_config.get("populate_by_name"):
+            names.add(name)
+    return names
+
+
+def _field_query_names(field: Any, name: str) -> set[str]:
+    alias = field.validation_alias
+    if isinstance(alias, str):
+        return {alias}
+    if isinstance(alias, AliasChoices) and all(isinstance(choice, str) for choice in alias.choices):
+        return set(alias.choices)
+    return {field.alias or name}
 
 
 def _query_names(dependant: Any) -> set[str]:
     """Параметры запроса эндпоинта вместе с его зависимостями."""
-    names = {param.alias for param in dependant.query_params}
+    names = set()
+    for param in dependant.query_params:
+        annotation = param.field_info.annotation
+        if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            names |= _model_query_names(annotation)
+        else:
+            names |= _field_query_names(param.field_info, param.name)
     for sub in dependant.dependencies:
         names |= _query_names(sub)
     return names

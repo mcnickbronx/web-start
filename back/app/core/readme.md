@@ -1,5 +1,5 @@
 # Ядро проекта
-Общее для всех модулей · 30.10.2026
+Общее для всех модулей · 31.10.2026
 
 `core` — не модуль с фичей, а общий слой: то, чем пользуются все остальные модули.
 Своих таблиц, админки и эндпоинтов у него нет, в Swagger и в админке он не виден. Модель одна, абстрактная, —
@@ -92,6 +92,9 @@ async def product_list(pagination: Pagination, filters: Annotated[ProductFilter,
 ```
 
 Образец в шаблоне — лента блога: `PageListFilter` в `page/schemas.py`, эндпоинт `page_list` в `page/rest.py`.
+`/api/page/list?category_slug=news&search=ремонт&page=1&row=10` отдаёт первые десять опубликованных
+статей рубрики `news`, где «ремонт» есть в заголовке или анонсе. Рабочую выборку держит
+`page/tests/test_query_model.py`, `test_news_search_first_ten_published_articles`.
 
 Лукап — любой, который понимает Tortoise: без суффикса — точное совпадение, `__icontains`, `__gte`/`__lte`,
 `__in` со списком, через связь — `category__slug`. Список лукапов — запись подходит, если подошёл любой (поиск
@@ -103,6 +106,13 @@ async def product_list(pagination: Pagination, filters: Annotated[ProductFilter,
 пропуск: опечатка `?staus=new` иначе отдала бы весь список, и это заметили бы не сразу. `page`, `row`, `sort`
 и другие параметры эндпоинта — не лишние. Правило «`date_to` без времени — до конца дня» (`back/CLAUDE.md`)
 фильтр сам не делает: такому полю нужен свой валидатор.
+
+Поля разбирает Query-модель FastAPI; подключение `Depends(ProductFilter.query)` остаётся прежним.
+Ошибки фильтра, неизвестных параметров и пагинации приходят вместе: у запроса
+`/api/page/list?serch=ремонт&page=abc` ответ `422` у `serch` и `page`. Независимые query-зависимости
+сохраняют свои параметры, а неверный запрос не вызывает эндпоинт. Это поведение FastAPI держит
+`core/tests/test_filter_query.py`, `test_combined_errors_before_endpoint`; изоляцию одновременных
+запросов — `test_concurrent_routes_keep_their_query_names` там же.
 
 ## Ошибки
 
