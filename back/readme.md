@@ -138,10 +138,12 @@ app/<module>/
 | Журнал логов | свой модуль `log`, запись через очередь | `django-db-logger` пишет синхронно и не попадает в генерацию `models_async.py` |
 
 Версии пакетов зафиксированы точно, в [requirements.txt](requirements.txt): Django 6.1,
-FastAPI 0.141, Tortoise ORM 1.1, taskiq 0.12. Python 3.14, база — PostgreSQL, проверено на 17.
+FastAPI 0.162.0, Starlette 1.9.0, Tortoise ORM 1.1, taskiq 0.12. Python 3.14, база — PostgreSQL, проверено на 17.
 
 FastAPI ещё не дошёл до 1.0, и ломающие изменения у него случаются в минорных версиях.
 Обновлять его стоит отдельным заходом и с проверкой, а не заодно с остальными пакетами.
+Прежние ошибки multipart-загрузки, включая именованный пустой файл и пустое имя,
+держит `form/tests/test_multipart_contract.py`.
 
 ## Версии
 
