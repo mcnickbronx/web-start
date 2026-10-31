@@ -5,6 +5,7 @@
 import os
 import sys
 from pathlib import Path
+from shlex import quote
 
 import environ
 from django.core.exceptions import ImproperlyConfigured
@@ -19,7 +20,9 @@ ENV_FILE = BASE_DIR.parent / ".env"
 if ENV_FILE.exists():
     env.read_env(ENV_FILE)
 elif "SECRET_KEY" not in os.environ:
-    raise ImproperlyConfigured("Нет .env — скопируйте шаблон: cp .env.txt .env")
+    raise ImproperlyConfigured(
+        f"Нет .env — скопируйте шаблон: cp {quote(str(ENV_FILE.with_name('.env.txt')))} {quote(str(ENV_FILE))}"
+    )
 
 # --- Режим и ключи
 
