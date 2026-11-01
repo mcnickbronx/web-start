@@ -1,5 +1,9 @@
 // Уведомление о cookie и SEO по умолчанию. Сайт задаёт своё в своём app/app.config.ts
 export default defineAppConfig({
+  personalData: {
+    /** Адрес выбранного проектом текста согласия; пусто — без ссылки. Требование приходит из API */
+    consentUrl: '',
+  },
   cookieNotice: {
     /** Показывать ли: cookie ставят Метрика и капча Яндекса — посетителя об этом предупреждают */
     isEnabled: true,

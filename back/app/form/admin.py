@@ -58,6 +58,7 @@ class FormTypeAdmin(admin.ModelAdmin):
         ("Письмо", {"fields": ["email_to", "email_subject", "is_email_tech_info"]}),
         ("Telegram", {"fields": ["telegram_chat", "is_telegram_contacts"]}),
         ("Обязательные поля", {"fields": ["is_contact_required", "is_name_required", "is_phone_required", "is_email_required", "is_message_required"]}),
+        ("Согласие", {"fields": ["is_consent_required"]}),
         ("Защита и файлы", {"fields": ["is_captcha", "is_trap", "is_file", "file_count_max"]}),
         ("Даты", {"fields": ["date_add", "date_modified"]}),
     ]
@@ -94,13 +95,14 @@ class FormRequestAdmin(HistoryAdmin):
     readonly_fields = [
         "form_type", "user", "name", "phone", "email", "message", "data_display", "source", "ip",
         "channel", "landing_page", "referrer", "utm_display", "ym_client_id", "browser", "user_agent",
-        "email_status", "email_error", "date_email_sent", "date_add", "date_modified",
+        "email_status", "email_error", "date_email_sent", "date_add", "date_modified", "date_consent", "consent_ip",
     ]
     fieldsets = [
         (None, {"fields": ["form_type", "status", "date_add"]}),
         ("Заявка", {"fields": ["name", "phone", "email", "message", "data_display", "user"]}),
         ("Откуда", {"fields": ["source", "channel", "landing_page", "referrer", "utm_display", "ym_client_id", "ip", "browser", "user_agent"]}),
         ("Письмо", {"fields": ["email_status", "email_error", "date_email_sent"]}),
+        ("Согласие", {"fields": ["date_consent", "consent_ip"]}),
         ("Даты", {"fields": ["date_modified"]}),
     ]
 

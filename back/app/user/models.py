@@ -30,6 +30,8 @@ class CustomUser(AbstractUser):
 
     username = None
     email = models.EmailField("Email", unique=True)
+    date_consent = models.DateTimeField("Дата согласия", null=True, blank=True)
+    consent_ip = models.CharField("IP согласия", max_length=45, null=True, blank=True)
     # Код из письма — один на активацию аккаунта и на сброс пароля
     confirmation_code = models.CharField("Код подтверждения", max_length=6, null=True, blank=True)
     confirmation_code_created_at = models.DateTimeField("Время отправки кода", null=True, blank=True)

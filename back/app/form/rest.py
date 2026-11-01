@@ -74,11 +74,11 @@ router.include_router(upload_router)
 
 @router.post("/create", response_model=MessageOut, summary="Отправить заявку", responses=BUSINESS,
              description="Без авторизации; с токеном пользователя заявка привяжется к нему. Какие поля "
-                         "обязательны — в `/detail/{code}`: `required_field_list` и `is_contact_required`. "
+                         "обязательны — в `/detail/{code}`: `required_field_list`, `is_contact_required` и `is_consent_required`. "
                          "Поле `leave_empty` на сайте скрыто и всегда пустое — это ловушка для ботов.\n\n"
                          "422 — ошибки полей в `full_error`, `loc` — имя поля: не заполнено обязательное "
                          "(`name`, `phone`, `email`, `message`), нет ни телефона, ни email (на обоих), "
-                         "неверный email, не пройдена капча (`captcha`). 406 — токен устарел или уже "
+                         "неверный email, не пройдена капча (`captcha`), не дано требуемое согласие (`consent`). 406 — токен устарел или уже "
                          "использован (заявка отправлена), форма выключена, файл не найден.\n\n"
                          "После 406 и после ошибки в поле `captcha` — запросить форму заново: по коду ответа, "
                          "а не по тексту, тексты могут меняться.")

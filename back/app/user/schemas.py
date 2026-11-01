@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, StrictBool, Field, ValidationInfo, field_validator
 
 # Email целиком в нижнем регистре: User@Mail.ru и user@mail.ru — один аккаунт
 Email = Annotated[str, AfterValidator(lambda value: value.strip().lower())]
@@ -53,7 +53,13 @@ class UserUpdateIn(BaseModel):
     last_name: str = Field(None, max_length=150, description="Фамилия")
 
 
+class RegistrationInfoOut(BaseModel):
+    is_consent_required: bool = Field(..., description="Нужно явное согласие при регистрации")
+
+
 class RegisterIn(BaseModel):
+    consent: StrictBool = Field(False, description="Явное согласие; по умолчанию не дано")
+
     model_config = ConfigDict(json_schema_extra={"example": {"email": "user@example.com", "first_name": "Иван", "last_name": "Иванов"}})
 
     email: Email = Field(..., max_length=254, description="Email")

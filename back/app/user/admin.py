@@ -44,10 +44,11 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ["is_active", "is_confirmed", "is_staff", "is_superuser"]
     search_fields = ["email", "first_name", "last_name"]
     # is_confirmed ставят активация и галка «Активен» (включил ждущего кода — подтвердил), снимает только регистрация
-    readonly_fields = ["last_login", "date_joined", "confirmation_code_created_at", "password_changed_at", "is_confirmed"]
+    readonly_fields = ["last_login", "date_joined", "confirmation_code_created_at", "password_changed_at", "is_confirmed", "date_consent", "consent_ip"]
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Персональные данные", {"fields": ("first_name", "last_name")}),
+        ("Согласие", {"fields": ("date_consent", "consent_ip")}),
         ("Права", {"fields": ("is_active", "is_confirmed", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Код подтверждения", {"fields": ("confirmation_code", "confirmation_code_created_at", "confirmation_code_attempts")}),
         ("Даты", {"fields": ("last_login", "date_joined", "password_changed_at")}),

@@ -22,6 +22,7 @@ from tortoise.transactions import in_transaction
 
 from core import telegram, upload
 from core.bridge import with_sync
+from core.consent import consent_stamp
 from core.errors import field_error
 from form import captcha, conf, models, models_async
 from form.schemas import FormRequestIn
@@ -71,6 +72,7 @@ async def get_form_detail(code: str) -> dict:
     return {
         "code": form_type.code,
         "name": form_type.name,
+        "is_consent_required": form_type.is_consent_required,
         "is_contact_required": form_type.is_contact_required,
         "required_field_list": required_field_list(form_type),
         "is_captcha": form_type.is_captcha,
@@ -175,6 +177,8 @@ async def create_request(data: FormRequestIn, user: user_models_async.CustomUser
         raise already_sent
 
     is_spam = form_type.is_trap and _is_trapped(data.leave_empty, payload["time"])
+    # Ловушка сохраняет прежний ответ; True здесь — присланный факт, не подтверждение личности.
+    date_consent, consent_ip = consent_stamp(data.consent, form_type.is_consent_required and not is_spam, ip)
     file_id_list = []
     if not is_spam:
         # Ошибки полей — 422 по полям, сайт подсветит их. Капча — после полей: токен SmartCaptcha
@@ -193,6 +197,7 @@ async def create_request(data: FormRequestIn, user: user_models_async.CustomUser
             form_request = await models_async.FormRequest.create(
                 form_type=form_type, user=user, name=data.name, phone=data.phone, email=data.email,
                 message=data.message, data=data.data, source=data.source, ip=ip, token_id=payload["id"],
+                date_consent=date_consent, consent_ip=consent_ip,
                 user_agent=user_agent[:500], **data.visit.model_dump(), utm=utm,
                 channel=detect_channel(utm, data.visit.referrer).value,
                 status=(Status.SPAM if is_spam else Status.NEW).value,

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { detail, error, isLoading, isSent, trap, upload, submit, clearFieldError } = useSiteForm('callback')
-const fields = reactive({ name: '', phone: '', captcha: '' })
+const fields = reactive({ name: '', phone: '', captcha: '', consent: false })
+const { personalData } = useAppConfig()
 
 async function onFile(value: File | null | undefined) {
   if (value) await upload(value)
@@ -16,6 +17,10 @@ async function onFile(value: File | null | undefined) {
       </UFormField>
       <UFormField label="Телефон" :required="detail.required_field_list.includes('phone')" :error="error?.fieldMap.phone">
         <UInput v-model="fields.phone" type="tel" class="w-full" @update:model-value="clearFieldError('phone')" />
+      </UFormField>
+      <UFormField v-if="detail.is_consent_required" name="consent" :error="error?.fieldMap.consent" required>
+        <UCheckbox v-model="fields.consent" label="Согласие на обработку персональных данных" @update:model-value="clearFieldError('consent')" />
+        <ULink v-if="personalData.consentUrl" :to="personalData.consentUrl" target="_blank" class="text-primary">Текст согласия</ULink>
       </UFormField>
       <FormTrap v-model="trap" />
       <FormSmartCaptcha

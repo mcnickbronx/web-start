@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/user/registration/info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Условия регистрации
+         * @description Публичное требование согласия. Без авторизации и обращения к базе. POST /register проверяет его самостоятельно.
+         */
+        get: operations["registration_info_api_user_registration_info_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user/register": {
         parameters: {
             query?: never;
@@ -15,7 +35,7 @@ export interface paths {
         put?: never;
         /**
          * Регистрация
-         * @description Создаёт неактивного пользователя без пароля и отправляет код подтверждения на почту. Дальше — /activate: код и пароль. Код по умолчанию живёт 30 минут. Адрес уже ждёт подтверждения — новый код (по умолчанию не чаще раза в минуту, раньше — 406); имя остаётся от первой регистрации.
+         * @description Создаёт неактивного пользователя без пароля и отправляет код подтверждения на почту. Дальше — /activate: код и пароль. Код по умолчанию живёт 30 минут. Адрес уже ждёт подтверждения — новый код (по умолчанию не чаще раза в минуту, раньше — 406); имя остаётся от первой регистрации. Требование согласия — GET /registration/info; при включении отсутствие consent: true даёт 422 у consent.
          */
         post: operations["register_api_user_register_post"];
         delete?: never;
@@ -439,9 +459,9 @@ export interface paths {
         put?: never;
         /**
          * Отправить заявку
-         * @description Без авторизации; с токеном пользователя заявка привяжется к нему. Какие поля обязательны — в `/detail/{code}`: `required_field_list` и `is_contact_required`. Поле `leave_empty` на сайте скрыто и всегда пустое — это ловушка для ботов.
+         * @description Без авторизации; с токеном пользователя заявка привяжется к нему. Какие поля обязательны — в `/detail/{code}`: `required_field_list`, `is_contact_required` и `is_consent_required`. Поле `leave_empty` на сайте скрыто и всегда пустое — это ловушка для ботов.
          *
-         *     422 — ошибки полей в `full_error`, `loc` — имя поля: не заполнено обязательное (`name`, `phone`, `email`, `message`), нет ни телефона, ни email (на обоих), неверный email, не пройдена капча (`captcha`). 406 — токен устарел или уже использован (заявка отправлена), форма выключена, файл не найден.
+         *     422 — ошибки полей в `full_error`, `loc` — имя поля: не заполнено обязательное (`name`, `phone`, `email`, `message`), нет ни телефона, ни email (на обоих), неверный email, не пройдена капча (`captcha`), не дано требуемое согласие (`consent`). 406 — токен устарел или уже использован (заявка отправлена), форма выключена, файл не найден.
          *
          *     После 406 и после ошибки в поле `captcha` — запросить форму заново: по коду ответа, а не по тексту, тексты могут меняться.
          */
@@ -549,6 +569,7 @@ export interface components {
          *       "file_size_max_mb": 10,
          *       "fill_seconds_min": 3,
          *       "is_captcha": true,
+         *       "is_consent_required": false,
          *       "is_contact_required": true,
          *       "is_file": true,
          *       "name": "Заказать звонок",
@@ -570,6 +591,11 @@ export interface components {
              * @description Название
              */
             name: string;
+            /**
+             * Is Consent Required
+             * @description Нужно явное согласие в поле consent
+             */
+            is_consent_required: boolean;
             /**
              * Is Contact Required
              * @description Нужен телефон или email — хотя бы одно из двух
@@ -667,6 +693,12 @@ export interface components {
          *     }
          */
         FormRequestIn: {
+            /**
+             * Consent
+             * @description Явное согласие; по умолчанию не дано
+             * @default false
+             */
+            consent?: boolean;
             /**
              * Token
              * @description Токен из /detail/{code}
@@ -1076,6 +1108,12 @@ export interface components {
          */
         RegisterIn: {
             /**
+             * Consent
+             * @description Явное согласие; по умолчанию не дано
+             * @default false
+             */
+            consent?: boolean;
+            /**
              * Email
              * @description Email
              */
@@ -1092,6 +1130,14 @@ export interface components {
              * @default
              */
             last_name?: string;
+        };
+        /** RegistrationInfoOut */
+        RegistrationInfoOut: {
+            /**
+             * Is Consent Required
+             * @description Нужно явное согласие при регистрации
+             */
+            is_consent_required: boolean;
         };
         /** ResolveOut */
         ResolveOut: {
@@ -1332,6 +1378,35 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    registration_info_api_user_registration_info_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationInfoOut"];
+                };
+            };
+            /** @description Ошибка валидации запроса */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorOut"];
+                };
+            };
+        };
+    };
     register_api_user_register_post: {
         parameters: {
             query?: never;

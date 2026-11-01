@@ -12,7 +12,9 @@ from datetime import timedelta
 
 from django.core.exceptions import ImproperlyConfigured
 
-from core.env import env_int
+from core.env import env_int, env_str
+
+CONSENT_REQUIRED = env_str("USER_CONSENT_REQUIRED", "false", choice_list=["false", "true"]) == "true"
 
 #: Access живёт в памяти вкладки, refresh — в куке httpOnly и продлевается при каждом
 #: обновлении access: кто заходит, не вылетит, пока не пропадёт дольше срока refresh

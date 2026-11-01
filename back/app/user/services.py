@@ -12,6 +12,7 @@ from tortoise.exceptions import IntegrityError
 from tortoise.expressions import F
 from tortoise.transactions import in_transaction
 
+from core.consent import consent_stamp
 from core.errors import field_error
 from core.user_agent import describe_user_agent
 from user import conf
@@ -91,16 +92,21 @@ async def issue_code(user: CustomUser, kind: str) -> None:
     """
     async with in_transaction():
         user = await CustomUser.select_for_update().get(id=user.id)
-        sent_at = user.confirmation_code_created_at
-        if sent_at and datetime.now(timezone.utc) - sent_at < conf.CONFIRMATION_CODE_RESEND_INTERVAL:
-            wait = conf.CONFIRMATION_CODE_RESEND_INTERVAL - (datetime.now(timezone.utc) - sent_at)
-            raise HTTPException(406, f"Код уже отправлен, повторите через {int(wait.total_seconds()) + 1} сек")
+        await _issue_code_locked(user, kind)
 
-        user.confirmation_code = f"{secrets.randbelow(900_000) + 100_000}"
-        user.confirmation_code_created_at = datetime.now(timezone.utc)
-        user.confirmation_code_attempts = 0
-        await user.save(update_fields=["confirmation_code", "confirmation_code_created_at", "confirmation_code_attempts"])
-        await send_code.kiq(user.email, user.confirmation_code, kind)
+
+async def _issue_code_locked(user: CustomUser, kind: str) -> None:
+    """Выдача кода уже заблокированной строке, внутри транзакции вызывающего сервиса."""
+    sent_at = user.confirmation_code_created_at
+    if sent_at and datetime.now(timezone.utc) - sent_at < conf.CONFIRMATION_CODE_RESEND_INTERVAL:
+        wait = conf.CONFIRMATION_CODE_RESEND_INTERVAL - (datetime.now(timezone.utc) - sent_at)
+        raise HTTPException(406, f"Код уже отправлен, повторите через {int(wait.total_seconds()) + 1} сек")
+
+    user.confirmation_code = f"{secrets.randbelow(900_000) + 100_000}"
+    user.confirmation_code_created_at = datetime.now(timezone.utc)
+    user.confirmation_code_attempts = 0
+    await user.save(update_fields=["confirmation_code", "confirmation_code_created_at", "confirmation_code_attempts"])
+    await send_code.kiq(user.email, user.confirmation_code, kind)
 
 
 async def check_code(user: CustomUser, code: str) -> None:
@@ -120,38 +126,33 @@ async def check_code(user: CustomUser, code: str) -> None:
         raise HTTPException(406, "Срок действия кода истёк, запросите новый")
 
 
-async def register(email: str, first_name: str, last_name: str) -> CustomUser:
-    """Неактивный пользователь без пароля и код подтверждения на почту. Пароль ставит активация:
-    его задаёт только тот, у кого почта, — кто первым зарегистрировал чужой адрес, им не войдёт."""
+async def register(email: str, first_name: str, last_name: str, consent: bool = False, ip: str | None = None) -> CustomUser:
+    """Регистрация и повтор кода: отметка согласия сохраняется вместе с успешной выдачей."""
     try:
         validate_email(email)
     except ValidationError as exc:
         raise field_error({"email": "Некорректный email"}) from exc
     email_taken = field_error({"email": "Пользователь с таким email уже зарегистрирован"})
-    user = await CustomUser.get_or_none(email=email)
-    if user is not None:
-        # Ждёт кода тот, у кого «Подтверждён» снята: подтверждённого — и выключенного в админке тоже —
-        # регистрация не трогает
-        if user.is_confirmed:
+    async with in_transaction():
+        user = await CustomUser.select_for_update().get_or_none(email=email)
+        # Проверка под замком: подтверждение между чтением и блокировкой не допускает повтор.
+        if user is not None and user.is_confirmed:
             raise email_taken
-        # Ждёт кода: новый код (в ту же минуту — 406). Имя остаётся от первой регистрации: повтор с чужим
-        # адресом своё имя владельцу не впишет; владелец правит имя в профиле
-        await issue_code(user, "activation")
-        return user
-
-    try:
-        user = await CustomUser.create(
-            email=email,
-            password=make_password(None),  # непригодный: войти нельзя, пока активация не задаст пароль
-            first_name=first_name,
-            last_name=last_name,
-            is_active=False,
-            is_confirmed=False,
-        )
-    except IntegrityError as exc:
-        # Два одновременных запроса с одним email: проверку выше прошли оба
-        raise email_taken from exc
-    await issue_code(user, "activation")
+        date_consent, consent_ip = consent_stamp(consent, conf.CONSENT_REQUIRED, ip)
+        if user is None:
+            try:
+                user = await CustomUser.create(
+                    email=email, password=make_password(None), first_name=first_name, last_name=last_name,
+                    is_active=False, is_confirmed=False,
+                )
+            except IntegrityError as exc:
+                # Два одновременных запроса с одним новым email: база пропустит один.
+                raise email_taken from exc
+        # Повтор не меняет имя. Отказ по интервалу и сбой очереди откатывают всю операцию.
+        await _issue_code_locked(user, "activation")
+        if date_consent is not None:
+            user.date_consent, user.consent_ip = date_consent, consent_ip
+            await user.save(update_fields=["date_consent", "consent_ip"])
     return user
 
 

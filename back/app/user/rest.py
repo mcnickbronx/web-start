@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 
 from core.schemas import MessageOut
-from user import auth, services
+from user import auth, conf, services
 from user.auth import CurrentSession, CurrentUser, get_session_by_token
 from user.schemas import (
     ActivateIn,
@@ -11,6 +11,7 @@ from user.schemas import (
     PasswordChangeIn,
     PasswordResetConfirmIn,
     RegisterIn,
+    RegistrationInfoOut,
     SessionOut,
     TokenOut,
     TokenPairIn,
@@ -24,12 +25,19 @@ UNAUTHORIZED = {401: {"model": MessageOut, "description": "Нет токена �
 BUSINESS = {406: {"model": MessageOut, "description": "Сообщение пользователю"}}
 
 
+@router.get("/registration/info", response_model=RegistrationInfoOut, summary="Условия регистрации",
+            description="Публичное требование согласия. Без авторизации и обращения к базе. POST /register проверяет его самостоятельно.")
+async def registration_info():
+    return {"is_consent_required": conf.CONSENT_REQUIRED}
+
+
 @router.post("/register", response_model=MessageOut, summary="Регистрация", responses=BUSINESS,
              description="Создаёт неактивного пользователя без пароля и отправляет код подтверждения на почту. "
                          "Дальше — /activate: код и пароль. Код по умолчанию живёт 30 минут. Адрес уже ждёт подтверждения — "
-                         "новый код (по умолчанию не чаще раза в минуту, раньше — 406); имя остаётся от первой регистрации.")
-async def register(data: RegisterIn):
-    await services.register(data.email, data.first_name, data.last_name)
+                         "новый код (по умолчанию не чаще раза в минуту, раньше — 406); имя остаётся от первой регистрации. "
+                         "Требование согласия — GET /registration/info; при включении отсутствие consent: true даёт 422 у consent.")
+async def register(data: RegisterIn, request: Request):
+    await services.register(data.email, data.first_name, data.last_name, data.consent, request.client.host if request.client else None)
     return {"message": "Код подтверждения отправлен на почту"}
 
 

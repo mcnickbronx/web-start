@@ -3,6 +3,8 @@ import type { AuthFormField, FormSubmitEvent } from '#ui/types'
 
 useSeo({ title: 'Регистрация', isIndexed: false })
 const auth = useAuth()
+const registration = useRegistration()
+const { personalData } = useAppConfig()
 const toast = useToast()
 const form = useTemplateRef('form')
 const step = ref<'form' | 'code'>('form')
@@ -27,7 +29,9 @@ function showError(error: ApiError | null) {
 }
 
 async function onRegister(event: FormSubmitEvent<{ email: string, first_name?: string, last_name?: string }>) {
-  const { error } = await auth.register(event.data)
+  const result = await registration.submit(event.data)
+  if (!result) return
+  const { error } = result
   showError(error)
   if (!error) {
     email.value = event.data.email
@@ -50,15 +54,23 @@ async function resend() {
 
 <template>
   <UPageCard class="mx-auto max-w-md">
-    <UAuthForm v-if="step === 'form'" ref="form" title="Регистрация" icon="i-lucide-user-plus" :fields="registerFieldList" :submit="{ label: 'Получить код' }" @submit="onRegister">
+    <p v-if="step === 'form' && registration.isLoading.value" class="text-muted">Загрузка условий регистрации…</p>
+    <UAlert v-if="step === 'form' && registration.loadError.value" color="error" :title="registration.loadError.value.message">
+      <template #actions><UButton label="Повторить загрузку" @click="registration.load" /></template>
+    </UAlert>
+    <UAuthForm v-if="step === 'form' && registration.info.value" ref="form" title="Регистрация" icon="i-lucide-user-plus" :fields="registerFieldList" :submit="{ label: 'Получить код' }" @submit="onRegister">
       <template #validation>
+        <UFormField v-if="registration.info.value?.is_consent_required" name="consent" :error="registration.error.value?.fieldMap.consent" required>
+          <UCheckbox v-model="registration.consent.value" label="Согласие на обработку персональных данных" />
+          <ULink v-if="personalData.consentUrl" :to="personalData.consentUrl" target="_blank" class="text-primary">Текст согласия</ULink>
+        </UFormField>
         <UAlert v-if="message" color="error" icon="i-lucide-circle-alert" :title="message" />
       </template>
       <template #footer>
         Уже есть аккаунт? <ULink to="/login" class="text-primary">Войти</ULink>
       </template>
     </UAuthForm>
-    <UAuthForm v-else ref="form" title="Подтверждение email" :description="`Код отправлен на ${email}`" icon="i-lucide-mail-check" :fields="codeFieldList" :submit="{ label: 'Подтвердить' }" @submit="onCode">
+    <UAuthForm v-if="step === 'code'" ref="form" title="Подтверждение email" :description="`Код отправлен на ${email}`" icon="i-lucide-mail-check" :fields="codeFieldList" :submit="{ label: 'Подтвердить' }" @submit="onCode">
       <template #validation>
         <UAlert v-if="message" color="error" icon="i-lucide-circle-alert" :title="message" />
       </template>

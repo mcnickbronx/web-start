@@ -48,6 +48,8 @@ export function useAuth() {
 
     login: (body: Schema['TokenPairIn']) => signIn(apiRequest(api.POST('/api/user/pair', { body }))),
 
+    registrationInfo: () => apiRequest(api.GET('/api/user/registration/info')),
+
     /** Регистрация без пароля: пользователь создаётся неактивным, код приходит на почту */
     register: (body: Schema['RegisterIn']) => apiRequest(api.POST('/api/user/register', { body })),
     /** Код из письма и пароль — активация и сразу вход. Пароль здесь: его задаёт только тот, у кого почта */

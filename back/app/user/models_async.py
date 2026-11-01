@@ -25,6 +25,8 @@ class CustomUser(Model):
     is_active = fields.BooleanField(default=True)
     date_joined = fields.DatetimeField(default=now)
     email = fields.CharField(max_length=254, unique=True)
+    date_consent = fields.DatetimeField(null=True)
+    consent_ip = fields.CharField(max_length=45, null=True)
     confirmation_code = fields.CharField(max_length=6, null=True)
     confirmation_code_created_at = fields.DatetimeField(null=True)
     confirmation_code_attempts = fields.SmallIntField(default=0)

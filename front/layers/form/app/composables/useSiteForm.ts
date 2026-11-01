@@ -1,7 +1,7 @@
 import type { components } from '#api-types'
 
 type Schema = components['schemas']
-export type FormFields = Pick<Schema['FormRequestIn'], 'name' | 'phone' | 'email' | 'message' | 'data' | 'captcha'>
+export type FormFields = Pick<Schema['FormRequestIn'], 'name' | 'phone' | 'email' | 'message' | 'data' | 'captcha' | 'consent'>
 
 function readVisit(): Schema['VisitIn'] {
   let stored: Partial<Visit> = {}
@@ -103,6 +103,8 @@ export function useSiteForm(code: string) {
     isSent.value = !result.error
     // Цель в Метрике для каждой формы своя: form_callback и т. п. Счётчика нет — вызов пустой
     if (isSent.value) {
+      // Следующая заявка требует нового действия человека; остальные поля не сбрасываем.
+      if ('consent' in fields) fields.consent = false
       metrika.reachGoal(`form_${code}`)
     }
     // После отправки токен израсходован; после ошибки токена или капчи — нужен новый.

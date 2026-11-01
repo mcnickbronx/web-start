@@ -1,7 +1,7 @@
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import AfterValidator, BaseModel, ConfigDict, StrictBool, Field, StringConstraints
 
 # Значение дополнительного поля: строка, число, да/нет, пусто или список — например, отмеченные галочки
 DataItem = Annotated[str, StringConstraints(max_length=500)] | int | float
@@ -16,7 +16,7 @@ def clipped(length: int):
 
 class FormDetailOut(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {
-        "code": "callback", "name": "Заказать звонок", "is_contact_required": True,
+        "code": "callback", "name": "Заказать звонок", "is_contact_required": True, "is_consent_required": False,
         "required_field_list": ["name", "phone"], "is_captcha": True, "captcha_provider": "numeric",
         "captcha_question": "23 + 7", "captcha_client_key": None, "is_file": True, "file_count_max": 5,
         "file_extension_list": ["jpg", "pdf", "docx"], "file_size_max_mb": 10, "fill_seconds_min": 3,
@@ -25,6 +25,7 @@ class FormDetailOut(BaseModel):
 
     code: str = Field(..., description="Код формы")
     name: str = Field(..., description="Название")
+    is_consent_required: bool = Field(..., description="Нужно явное согласие в поле consent")
     is_contact_required: bool = Field(..., description="Нужен телефон или email — хотя бы одно из двух")
     required_field_list: list[Literal["name", "phone", "email", "message"]] = Field(..., description="Обязательные общие поля")
     is_captcha: bool = Field(..., description="Нужна капча")
@@ -55,6 +56,8 @@ class VisitIn(BaseModel):
 
 
 class FormRequestIn(BaseModel):
+    consent: StrictBool = Field(False, description="Явное согласие; по умолчанию не дано")
+
     model_config = ConfigDict(json_schema_extra={"example": {
         "token": "eyJpZCI6Ij...", "name": "Иван", "phone": "+79990000000", "email": "ivan@example.com",
         "message": "Перезвоните после обеда", "data": {"Удобное время": "после 14:00", "Услуги": ["медосмотр", "выезд"]},
