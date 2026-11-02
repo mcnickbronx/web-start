@@ -182,7 +182,7 @@ export default defineNuxtConfig({
 - [Изменения по версиям](../CHANGELOG.md) — общие с бэкендом: что нового и что сделать сайтам
 - [Шаблон сайта](https://github.com/mcnickbronx/web-site-starter) — заготовка для фронтенд-разработчика сайта: сборка, выкладка, шапка, подвал, окно заявки
 - [Бэкенд](../back/readme.md) — Django + FastAPI, модули page, form, user
-- [Слой core](layers/core/readme.md) — клиент API, типы, ошибки
+- [Слой core](layers/core/readme.md) — клиент API, типы, ошибки; [подключение заготовок документов](layers/core/readme.md#подключить-заготовки-к-своему-сайту)
 - [Слой user](layers/user/readme.md) — вход, кабинет, где живут токены
 - [Слой live](layers/live/readme.md) — живые события в кабинете: одно соединение на вкладку, вход токеном, переподключение
 - [Слой form](layers/form/readme.md) — формы сайта, ловушки для ботов, откуда пришёл посетитель

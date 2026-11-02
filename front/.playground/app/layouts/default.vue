@@ -11,4 +11,12 @@
       <slot />
     </UContainer>
   </UMain>
+  <UFooter>
+    <template #left>
+      <nav aria-label="Документы" class="flex flex-wrap gap-4 text-sm">
+        <ULink to="/privacy">Политика обработки данных</ULink>
+        <ULink to="/consent">Согласие на обработку данных</ULink>
+      </nav>
+    </template>
+  </UFooter>
 </template>

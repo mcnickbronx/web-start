@@ -1,4 +1,6 @@
-// Демо-сайт с блогом: лента — в карту сайта. Список дописывается к списку движка ('/')
+// Адреса документов принадлежат демо-сайту; список дописывается к списку движка ('/')
 export default defineAppConfig({
-  page: { sitemapPageList: ['/blog'] },
+  cookieNotice: { policyUrl: '/privacy' },
+  personalData: { consentUrl: '/consent' },
+  page: { sitemapPageList: ['/blog', '/privacy', '/consent'] },
 })
