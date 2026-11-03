@@ -74,7 +74,7 @@ npm run dev                    # http://localhost:3000
 ```ts
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-01',
-  extends: [['gh:mcnickbronx/web-start/front#v2.4.0', { install: true }]],
+  extends: [['gh:mcnickbronx/web-start/front#v3.0.0', { install: true }]],
 })
 ```
 
@@ -119,8 +119,8 @@ export default defineNuxtConfig({
 | Заголовок ленты блога, статей на странице | `page: { blogTitle, blogDescription, feedRow }` в `app.config.ts` | [page](layers/page/readme.md) |
 | Вид ленты, карточек, статьи, меню рубрик | файл с тем же именем в `app/components/`: `PageBlog`, `PageFeed`, `PageArticle`, `PageCategoryMenu` | [page](layers/page/readme.md) |
 | Форма заявки | своя разметка на `useSiteForm(код)`; ловушку `FormTrap` и капчу `FormSmartCaptcha` не перекрывать — в них защита от спама | [form](layers/form/readme.md) |
-| Кабинет: вход, регистрация, профиль | вторая строка `extends` с тем же тегом, без `install`: `'gh:mcnickbronx/web-start/front/layers/user#v2.4.0'`; экраны — копия образца из [`.playground/app/pages`](.playground/app/pages/) | [user](layers/user/readme.md) |
-| Живые события в кабинете | третья строка `extends` с тем же тегом: `'gh:mcnickbronx/web-start/front/layers/live#v2.4.0'`; `useLive().on(тип, …)`; на бэкенде — модуль `live` | [live](layers/live/readme.md) |
+| Кабинет: вход, регистрация, профиль | вторая строка `extends` с тем же тегом, без `install`: `'gh:mcnickbronx/web-start/front/layers/user#v3.0.0'`; экраны — копия образца из [`.playground/app/pages`](.playground/app/pages/) | [user](layers/user/readme.md) |
+| Живые события в кабинете | третья строка `extends` с тем же тегом: `'gh:mcnickbronx/web-start/front/layers/live#v3.0.0'`; `useLive().on(тип, …)`; на бэкенде — модуль `live` | [live](layers/live/readme.md) |
 | Текст согласия для форм и регистрации | `personalData: { consentUrl }` в `app.config.ts`; требование приходит из API | [core](layers/core/readme.md#согласие-на-обработку-данных) |
 | Уведомление о cookie | `cookieNotice: { policyUrl, isEnabled }` в `app.config.ts`; свой вид — `CookieNotice` | [core](layers/core/readme.md) |
 | Название сайта и картинка ссылки в мессенджере | `seo: { siteName, image }` в `app.config.ts`; картинка 1200×630 — в `public/` | [core](layers/core/readme.md) |
