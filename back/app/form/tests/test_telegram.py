@@ -113,10 +113,17 @@ class TelegramFormTest(FakeTelegramMixin, ApiTestCase):
         create_form_type(telegram_chat="-101")
         original = services.send_request_telegram.kiq
 
+        def committed_request_exists(record_id):
+            # Соединение принадлежит рабочему потоку: закрыть его нужно там же.
+            try:
+                return FormRequest.objects.filter(id=record_id).exists()
+            finally:
+                connection.close()
+
         async def enqueue(record_id):
             # Читаем по независимому соединению Django: незакоммиченную заявку оно не увидит.
             from asgiref.sync import sync_to_async
-            self.assertTrue(await sync_to_async(FormRequest.objects.filter(id=record_id).exists)())
+            self.assertTrue(await sync_to_async(committed_request_exists)(record_id))
             return await original(record_id)
 
         with mock.patch.object(services.send_request_telegram, "kiq", side_effect=enqueue) as queued:

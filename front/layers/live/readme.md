@@ -12,9 +12,9 @@
 
 ```ts
 extends: [
-  ['gh:mcnickbronx/web-start/front#v3.0.0', { install: true }],
-  'gh:mcnickbronx/web-start/front/layers/user#v3.0.0',
-  'gh:mcnickbronx/web-start/front/layers/live#v3.0.0',
+  ['gh:mcnickbronx/web-start/front#v3.0.1', { install: true }],
+  'gh:mcnickbronx/web-start/front/layers/user#v3.0.1',
+  'gh:mcnickbronx/web-start/front/layers/live#v3.0.1',
 ],
 ```
 
