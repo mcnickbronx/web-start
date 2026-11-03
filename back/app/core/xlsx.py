@@ -11,6 +11,7 @@ import datetime
 import html
 import io
 import re
+from contextlib import suppress
 from decimal import Decimal
 from math import isfinite
 from pathlib import Path
@@ -25,6 +26,7 @@ from django.utils.safestring import SafeData
 from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.writer.excel import ExcelWriter
+from openpyxl.worksheet._writer import ALL_TEMP_FILES, WorksheetWriter, create_temporary_file
 
 # Символы, которых нет в XML 1.0: управляющие и U+FFFE, U+FFFF. openpyxl отказывает только на управляющих,
 # а U+FFFF пишет как есть — лист в файле не откроется
@@ -42,7 +44,12 @@ def build_xlsx(headers, rows) -> io.BytesIO:
     workbook = Workbook(write_only=True)
     sheet = workbook.create_sheet()
     buffer = io.BytesIO()
+    xml_path = None
     try:
+        # Владеем файлом до конструктора: он уже открывает XML и может упасть.
+        xml_path = create_temporary_file()
+        sheet._writer = WorksheetWriter(sheet, out=xml_path)
+        sheet._writer.write_top()
         sheet.append([cell(sheet, str(header)) for header in headers])
         for row in rows:
             sheet.append([cell(sheet, result) for result in row])
@@ -53,19 +60,18 @@ def build_xlsx(headers, rows) -> io.BytesIO:
         return buffer
     except BaseException:
         buffer.close()
-        # Workbook.close() не убирает XML write_only при ошибке до/во время save.
-        # Закрываем поток листа и удаляем его собственный временный файл.
-        try:
-            if not sheet.closed:
-                sheet.close()
-        finally:
-            if sheet._writer is not None:
-                sheet._writer.close()
-                if Path(sheet._writer.out).exists():
-                    sheet._writer.cleanup()
+        # Не завершаем лист через close(): это пишет ещё XML и скрывает исходную ошибку.
+        for stream in (sheet._rows, getattr(sheet._writer, "xf", None)):
+            if stream is not None:
+                with suppress(Exception):
+                    stream.close()
         raise
     finally:
         workbook.close()
+        if xml_path is not None:
+            Path(xml_path).unlink(missing_ok=True)
+            if xml_path in ALL_TEMP_FILES:
+                ALL_TEMP_FILES.remove(xml_path)
 
 
 @admin.action(description="Выгрузить в Excel", permissions=["view"])

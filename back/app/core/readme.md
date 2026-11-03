@@ -631,7 +631,9 @@ await send_message(chat_id, "Новая заявка")
 после очистки дают `ValueError`. Недопустимые XML-символы, включая одиночные суррогаты,
 удаляются. При ошибке источника или записи частичный файл не возвращается, буфер и
 временный XML закрываются и удаляются. Договор держит `core/tests/test_xlsx_builder.py`
-(`test_source_or_type_error_closes_buffer_and_temporary_xml`, `test_save_error_closes_buffer_and_temporary_xml`).
+(`test_source_or_type_error_closes_buffer_and_temporary_xml`, `test_save_error_closes_buffer_and_temporary_xml`);
+сбой первой и последующих записей XML и сохранность параллельной выгрузки —
+`core/tests/test_xlsx_xml_write.py`, `test_disk_write_error_preserves_cause_and_cleans_only_own_file`.
 
 Короткий пример выдачи небольшого синтетического списка через FastAPI (локальное приложение,
 не новый маршрут шаблона); реальный ASGI-запрос проверяет `test_synthetic_fastapi_download`:
