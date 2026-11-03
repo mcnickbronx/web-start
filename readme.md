@@ -48,7 +48,7 @@
 | Картинка → webp при загрузке: ширина до предела, поворот по EXIF | `core`; первыми — картинки страниц | есть | [ядро](back/app/core/readme.md#картинки) |
 | Письма по шаблону | `core` | есть | [ядро](back/app/core/readme.md#письма) |
 | Уведомления Telegram | `core`, `form` | есть | [ядро](back/app/core/readme.md#telegram), [заявки](back/app/form/readme.md#telegram) |
-| Выгрузка списка админки в Excel | `core` | есть | [ядро](back/app/core/readme.md#выгрузка-в-excel) |
+| Excel из готовых строк для сервиса и выгрузка списка админки | `core` | есть | [ядро](back/app/core/readme.md#выгрузка-в-excel) |
 | История изменений: кто, когда и что поменял | `core`; первыми — заявки | есть | [ядро](back/app/core/readme.md#история-изменений) |
 | Фоновые задачи и задачи по расписанию | `core`, `project` | есть | [ядро](back/app/core/readme.md#фоновые-задачи) |
 | Живые события в браузере (WebSocket) | модуль `live`, слой `live` | есть | [модуль](back/app/live/readme.md), [слой](front/layers/live/readme.md) |

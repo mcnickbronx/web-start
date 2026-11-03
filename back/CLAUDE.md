@@ -79,6 +79,8 @@ app/<module>/
 Фильтр списка в админке по связи с большим справочником — `AutocompleteFilter` из `admin_filter_kit.filters`:
 `list_filter = [("поле", AutocompleteFilter)]`, свой заголовок — подклассом с `title`; у админки справочника нужны `search_fields`.
 
+Excel из готовых строк для сервиса — `build_xlsx` из `core.xlsx`; договор и выдача из API — [ядро](app/core/readme.md#из-готовых-строк-для-сервиса).
+
 Выгрузка списка админки в Excel — `export_xlsx` из `core.xlsx` в `actions`: колонки как в `list_display`, свою выгрузку не писать.
 
 Дерево из плоского списка (рубрики, вложенные страницы, папки) — `core.tree`: вложенный JSON — `build_tree`, узел с потомками — `descendant_ids`, перенос без цикла — `check_parent`; своё не писать. Образец — рубрики блога: `category_list` в `page/services.py`, форма рубрики в `page/admin.py`.
