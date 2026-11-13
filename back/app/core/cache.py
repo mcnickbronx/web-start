@@ -115,7 +115,7 @@ def clear_on_change(model, *keys: str) -> None:
         transaction.on_commit(lambda: delete(keys), using=using)
 
     # weak=False: clear — локальная функция, по слабой ссылке сборщик убрал бы её сразу после выхода отсюда.
-    # Тест этого не поймает: при DEBUG Django держит получателя в своём кэше и без нас
+    # При DEBUG Django сам удерживает получателя; жизнь без этого проверяет test_cache_signal_lifetime.py.
     uid = f"core.cache:{model._meta.label}:{','.join(keys)}"
     post_save.connect(clear, sender=model, weak=False, dispatch_uid=uid)
     post_delete.connect(clear, sender=model, weak=False, dispatch_uid=uid)
