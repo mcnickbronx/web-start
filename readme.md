@@ -18,6 +18,7 @@
 |---|---|---|
 | `back/` | бэкенд: Django — модели, миграции, админка; FastAPI — API; модули `user`, `page`, `form`, `log`, `live` | [back/readme.md](back/readme.md) |
 | `front/` | движок сайтов на Nuxt 4 и Nuxt UI: слои `core`, `form`, `page`, `user`, `live` и демо-сайт | [front/readme.md](front/readme.md) |
+| `documents/` | отдельные учебные Markdown-заготовки документов сайта и заполненные примеры | [documents/readme.md](documents/readme.md) |
 
 Модуль бэкенда и слой фронта с одним именем — пара: `page` ↔ `page`, `form` ↔ `form`.
 Меняются они вместе, поэтому и живут в одном репозитории под одной версией.
