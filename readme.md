@@ -18,7 +18,7 @@
 |---|---|---|
 | `back/` | бэкенд: Django — модели, миграции, админка; FastAPI — API; модули `user`, `page`, `form`, `log`, `live` | [back/readme.md](back/readme.md) |
 | `front/` | движок сайтов на Nuxt 4 и Nuxt UI: слои `core`, `form`, `page`, `user`, `live` и демо-сайт | [front/readme.md](front/readme.md) |
-| `documents/` | отдельные учебные Markdown-заготовки документов сайта и заполненные примеры | [documents/readme.md](documents/readme.md) |
+| `documents/` | [Шаблоны четырёх юридических страниц в Markdown](documents/readme.md) |
 
 Модуль бэкенда и слой фронта с одним именем — пара: `page` ↔ `page`, `form` ↔ `form`.
 Меняются они вместе, поэтому и живут в одном репозитории под одной версией.
@@ -65,6 +65,17 @@
 «Есть» — в коде этой версии; «в работе» — делается, в версию ещё не вошло; «в планах» — пункт
 [что дальше](back/docs/todo.md). Новый модуль, слой или общее в `core` — строкой сюда в том же коммите,
 сделанное из «в работе» и «в планах» — состояние «есть» и ссылка на readme.
+
+## Юридические страницы
+
+Готовые образцы с тестовыми реквизитами ООО «Демо»:
+
+- [Политика обработки персональных данных](documents/templates/privacy.md).
+- [Согласие на обработку персональных данных](documents/templates/consent.md).
+- [Политика использования cookie](documents/templates/cookies.md).
+- [Согласие на рассылку](documents/templates/newsletter-consent.md).
+
+Как адаптировать тексты и ссылки под свой сайт — [в README шаблонов](documents/readme.md).
 
 ## Как это работает
 

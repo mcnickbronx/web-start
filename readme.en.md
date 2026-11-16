@@ -21,7 +21,7 @@ A starter kit for web projects: a **Django + FastAPI** backend and a **Nuxt 4** 
 |---|---|
 | `back/` | Backend. Django — models, migrations, admin; FastAPI — the API under `/api`; Tortoise ORM — async access to the same tables. Modules `user`, `page`, `form`, `log`, `live` |
 | `front/` | Site engine on Nuxt 4 and Nuxt UI 4: layers `core`, `form`, `page`, `user`, `live` and a demo site |
-| `documents/` | [Standalone educational Markdown document templates and filled examples](documents/readme.md) |
+| `documents/` | [Four legal-page Markdown templates](documents/readme.md) |
 
 A backend module and a frontend layer with the same name are a pair (`page` ↔ `page`,
 `form` ↔ `form`). They change together, so they live in one repository under one version.
