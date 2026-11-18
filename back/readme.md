@@ -137,8 +137,9 @@ app/<module>/
 | Зависимости | точные версии в `requirements.txt` | сборка образа не зависит от даты |
 | Журнал логов | свой модуль `log`, запись через очередь | `django-db-logger` пишет синхронно и не попадает в генерацию `models_async.py` |
 
-Версии пакетов зафиксированы точно, в [requirements.txt](requirements.txt): Django 6.1,
-FastAPI 0.162.0, Starlette 1.9.0, Tortoise ORM 1.1, taskiq 0.12. Python 3.14, база — PostgreSQL, проверено на 17.
+Точные версии пакетов, включая FastAPI, зафиксированы в [requirements.txt](requirements.txt).
+В стеке — Django 6.1, Starlette 1.9.0, Tortoise ORM 1.1 и taskiq 0.12.
+Python 3.14, база — PostgreSQL, проверено на 17.
 
 FastAPI ещё не дошёл до 1.0, и ломающие изменения у него случаются в минорных версиях.
 Обновлять его стоит отдельным заходом и с проверкой, а не заодно с остальными пакетами.
